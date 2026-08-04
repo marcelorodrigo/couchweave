@@ -10,6 +10,8 @@ import org.springframework.web.util.UriUtils;
 
 final class CouchDbUriBuilder {
 
+    private static final String PATH_DELIMITER = "/";
+
     private final String baseUri;
 
     CouchDbUriBuilder(CouchDbClientSettings settings) {
@@ -29,8 +31,8 @@ final class CouchDbUriBuilder {
         var encodedPath = pathSegments.stream()
                 .map(segment -> UriUtils.encodePathSegment(
                         Objects.requireNonNull(segment, "path segment must not be null"), StandardCharsets.UTF_8))
-                .reduce((left, right) -> left + "/" + right)
-                .map(path -> "/" + path)
+                .reduce((left, right) -> left + PATH_DELIMITER + right)
+                .map(path -> PATH_DELIMITER + path)
                 .orElse("");
         var encodedQuery = queryParameters.entrySet().stream()
                 .map(entry -> encodeQueryParameter(entry.getKey(), entry.getValue()))

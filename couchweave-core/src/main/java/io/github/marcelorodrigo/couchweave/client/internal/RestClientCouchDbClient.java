@@ -19,6 +19,9 @@ import tools.jackson.databind.ObjectMapper;
 
 final class RestClientCouchDbClient implements CouchDbClient {
 
+    private static final String DATABASE_PARAMETER = "database";
+    private static final String DOCUMENT_ID_PARAMETER = "documentId";
+
     private final RestClient restClient;
     private final CouchDbUriBuilder uriBuilder;
     private final CouchDbFailureTranslator failureTranslator;
@@ -52,8 +55,8 @@ final class RestClientCouchDbClient implements CouchDbClient {
 
     @Override
     public CouchDbWriteResult putDocument(String database, String documentId, JsonNode document) {
-        requireText(database, "database");
-        requireText(documentId, "documentId");
+        requireText(database, DATABASE_PARAMETER);
+        requireText(documentId, DOCUMENT_ID_PARAMETER);
         Objects.requireNonNull(document, "document must not be null");
         if (!document.isObject()) {
             throw new IllegalArgumentException("document must be a JSON object");
@@ -66,8 +69,8 @@ final class RestClientCouchDbClient implements CouchDbClient {
 
     @Override
     public Optional<JsonNode> getDocument(String database, String documentId) {
-        requireText(database, "database");
-        requireText(documentId, "documentId");
+        requireText(database, DATABASE_PARAMETER);
+        requireText(documentId, DOCUMENT_ID_PARAMETER);
         var context = CouchDbRequestContext.forDocument(database, documentId, null);
         try {
             var response = exchange(HttpMethod.GET, List.of(database, documentId), Map.of(), null, context);
@@ -79,8 +82,8 @@ final class RestClientCouchDbClient implements CouchDbClient {
 
     @Override
     public boolean documentExists(String database, String documentId) {
-        requireText(database, "database");
-        requireText(documentId, "documentId");
+        requireText(database, DATABASE_PARAMETER);
+        requireText(documentId, DOCUMENT_ID_PARAMETER);
         var context = CouchDbRequestContext.forDocument(database, documentId, null);
         try {
             exchange(HttpMethod.HEAD, List.of(database, documentId), Map.of(), null, context);
@@ -92,8 +95,8 @@ final class RestClientCouchDbClient implements CouchDbClient {
 
     @Override
     public CouchDbWriteResult deleteDocument(String database, String documentId, String revision) {
-        requireText(database, "database");
-        requireText(documentId, "documentId");
+        requireText(database, DATABASE_PARAMETER);
+        requireText(documentId, DOCUMENT_ID_PARAMETER);
         requireText(revision, "revision");
         var context = CouchDbRequestContext.forDocument(database, documentId, revision);
         var response =

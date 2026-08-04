@@ -70,9 +70,10 @@ class RestClientCouchDbClientIT {
                 {"_id":"stale-book","_rev":"%s","title":"Current"}
                 """.formatted(created.revision()));
         client.putDocument(database.databaseName(), documentId, currentDocument);
+        var databaseName = database.databaseName();
 
         // when / then
-        assertThatThrownBy(() -> client.putDocument(database.databaseName(), documentId, staleDocument))
+        assertThatThrownBy(() -> client.putDocument(databaseName, documentId, staleDocument))
                 .isInstanceOf(CouchOptimisticLockingFailureException.class)
                 .hasMessageContaining(documentId)
                 .hasMessageContaining(created.revision());
