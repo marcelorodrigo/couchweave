@@ -14,15 +14,14 @@ import org.springframework.data.mapping.model.SimpleTypeHolder;
 final class BasicCouchPersistentProperty extends AnnotationBasedPersistentProperty<CouchPersistentProperty>
         implements CouchPersistentProperty {
 
-    private static final String ID_FIELD = "_id";
-    private static final String REVISION_FIELD = "_rev";
-
     private final CouchField couchField;
+    private final boolean revisionProperty;
     private final String fieldName;
 
     BasicCouchPersistentProperty(
             Property property, PersistentEntity<?, CouchPersistentProperty> owner, SimpleTypeHolder simpleTypeHolder) {
         super(property, owner, simpleTypeHolder);
+        this.revisionProperty = findPropertyAnnotation(Revision.class) != null;
         this.couchField = findPropertyAnnotation(CouchField.class);
         this.fieldName = resolveFieldName();
     }
@@ -39,12 +38,17 @@ final class BasicCouchPersistentProperty extends AnnotationBasedPersistentProper
 
     @Override
     public boolean isRevisionProperty() {
-        return findPropertyAnnotation(Revision.class) != null;
+        return revisionProperty;
     }
 
     @Override
     public boolean isVersionProperty() {
         return isRevisionProperty();
+    }
+
+    @Override
+    public boolean isIdProperty() {
+        return super.isIdProperty() || findPropertyAnnotation(org.springframework.data.annotation.Id.class) != null;
     }
 
     boolean hasCouchFieldAnnotation() {
@@ -71,10 +75,10 @@ final class BasicCouchPersistentProperty extends AnnotationBasedPersistentProper
 
     private String resolveFieldName() {
         if (isIdProperty()) {
-            return ID_FIELD;
+            return CouchFieldNames.ID;
         }
         if (isRevisionProperty()) {
-            return REVISION_FIELD;
+            return CouchFieldNames.REVISION;
         }
         if (couchField == null || couchField.value().isEmpty()) {
             return getName();

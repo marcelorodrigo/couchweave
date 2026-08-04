@@ -71,6 +71,22 @@ class CouchPersistentPropertyMetadataTest {
         assertThat(entity.getPersistentProperty("name").getFieldName()).isEqualTo("display_name");
     }
 
+    @Test
+    @DisplayName("should resolve a composed ID annotation on a record component")
+    void shouldResolveAComposedIdAnnotationOnARecordComponent() {
+        // given
+        var context = initializedContext(ComposedIdRecord.class);
+
+        // when
+        var entity = context.getRequiredPersistentEntity(ComposedIdRecord.class);
+
+        // then
+        assertThat(entity.getIdProperty())
+                .extracting(CouchPersistentProperty::getName)
+                .isEqualTo("id");
+        assertThat(entity.getRequiredIdProperty().getFieldName()).isEqualTo("_id");
+    }
+
     @ParameterizedTest
     @MethodSource("reservedFieldMappings")
     @DisplayName("should reject an ordinary property mapped to a reserved field")
@@ -174,6 +190,9 @@ class CouchPersistentPropertyMetadataTest {
             @StoredDisplayName String name) {}
 
     @CouchDocument
+    record ComposedIdRecord(@DocumentId String id) {}
+
+    @CouchDocument
     static class NaturalIdFieldDocument {
         @Id
         String id;
@@ -259,4 +278,9 @@ class CouchPersistentPropertyMetadataTest {
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.RECORD_COMPONENT)
     @interface DocumentRevision {}
+
+    @Id
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.RECORD_COMPONENT)
+    @interface DocumentId {}
 }

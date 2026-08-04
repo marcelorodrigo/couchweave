@@ -11,7 +11,8 @@ import org.springframework.data.mapping.model.BasicPersistentEntity;
 final class BasicCouchPersistentEntity<T> extends BasicPersistentEntity<T, CouchPersistentProperty>
         implements CouchPersistentEntity<T> {
 
-    private static final Set<String> RESERVED_FIELDS = Set.of("_id", "_rev", "couchweave_type");
+    private static final Set<String> RESERVED_FIELDS =
+            Set.of(CouchFieldNames.ID, CouchFieldNames.REVISION, CouchFieldNames.DISCRIMINATOR);
 
     private final String discriminator;
     private final String database;
