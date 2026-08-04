@@ -1,0 +1,21 @@
+# Java build output
+*.class
+target/
+build/
+out/
+.gradle/
+
+# IDE metadata
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+.vscode/
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
