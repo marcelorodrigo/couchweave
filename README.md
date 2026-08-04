@@ -66,6 +66,11 @@ The repository contains the initial multi-module project skeleton at version
 starter artifacts, but these modules do not yet provide CouchDB behavior or a
 public Java API.
 
+The [compatibility policy](docs/compatibility.md) records the initial Java,
+Spring Data, Spring Boot, and CouchDB version contract. The
+[feature-support policy](docs/supported-features.md) distinguishes implemented,
+planned, deferred, and unsupported behavior.
+
 ## Building
 
 The build requires JDK 21 or newer. The Maven Wrapper downloads and runs the
