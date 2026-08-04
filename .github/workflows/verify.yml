@@ -1,0 +1,59 @@
+name: Verify
+
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Java ${{ matrix.java }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        java:
+          - "21"
+          - "25"
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+          cache: maven
+          cache-dependency-path: "**/pom.xml"
+
+      - name: Verify Maven reactor
+        run: ./mvnw --batch-mode --no-transfer-progress verify
+
+      - name: Generate coverage reports after failure
+        if: failure()
+        continue-on-error: true
+        run: ./mvnw --batch-mode --no-transfer-progress jacoco:report jacoco:report-aggregate
+
+      - name: Upload failure reports
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: verification-reports-java-${{ matrix.java }}
+          path: |
+            **/target/surefire-reports/**
+            **/target/failsafe-reports/**
+            **/target/site/jacoco/**
+            **/target/site/jacoco-aggregate/**
+          if-no-files-found: warn
+          retention-days: 7
