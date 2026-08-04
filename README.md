@@ -43,30 +43,51 @@ The planned capabilities include:
   and CouchDB versions.
 - Test repository behavior against real CouchDB instances.
 
-## Planned modules
+## Modules
 
-The exact module structure will be established with the first implementation.
-The current direction is:
+The Maven reactor currently contains:
 
 | Module | Responsibility |
 | --- | --- |
 | `couchweave-core` | CouchDB mapping, operations, repository implementation, and query support |
 | `couchweave-spring-boot` | Spring Boot auto-configuration |
 | `couchweave-spring-boot-starter` | Opinionated dependency entry point for Spring Boot applications |
+| `samples/couchweave-sample` | Non-publishable sample used to verify the complete reactor and test lifecycle |
 
 ## Project status
 
-The repository currently contains project documentation and licensing only.
-The first implementation milestone will define the supported Spring Data
-contracts, CouchDB client strategy, package namespace, Maven coordinates, and
-version compatibility policy.
+The repository contains the initial multi-module project skeleton at version
+`0.0.1-SNAPSHOT`. The build produces the core, Spring Boot integration, and
+starter artifacts, but these modules do not yet provide CouchDB behavior or a
+public Java API.
+
+## Building
+
+The build requires JDK 21 or newer. The Maven Wrapper downloads and runs the
+pinned Maven version, so a separate Maven installation is not required.
+
+On macOS or Linux:
+
+```shell
+./mvnw verify
+```
+
+On Windows:
+
+```bat
+mvnw.cmd verify
+```
+
+To build the sample and every upstream module it depends on:
+
+```shell
+./mvnw -pl samples/couchweave-sample -am verify
+```
 
 ## Contributing
 
-The contribution workflow and development setup will be documented when the
-initial build and module structure are introduced. Until then, proposals and
-design discussions can be raised through the repository's issue tracker once
-it is published.
+Run the complete Maven verification build before submitting a change. Further
+contribution conventions will be documented as the implementation develops.
 
 ## License
 
