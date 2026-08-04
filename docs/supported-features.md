@@ -21,9 +21,10 @@ Spring Boot, and CouchDB versions to which these statuses apply.
 | Area | Capability | Status | Contract |
 | --- | --- | --- | --- |
 | Build | Maven reactor and module dependency structure | Supported | The parent, three public modules, sample, and coverage report build together on the CI Java matrix. |
+| Operations | Synchronous mapped document CRUD | Supported | `CouchWeaveTemplate` supports save, find, existence, and revision-aware deletion without Spring Boot. |
+| Mapping | Java fields, document `_id`, and document `_rev` | Supported | `CouchWeaveConverter` maps IDs and revisions, including immutable entities and generated IDs. |
 | Repositories | Synchronous document CRUD | Planned | Repository operations will preserve CouchDB document and revision semantics. |
-| Mapping | Java fields, document `_id`, and document `_rev` | Planned | IDs and revisions will be explicit mapping concepts. |
-| Concurrency | Revision-based optimistic locking | Planned | Stale revisions will surface as a meaningful optimistic-locking failure. |
+| Concurrency | Revision-based optimistic locking | Supported | CouchDB conflicts surface as `CouchOptimisticLockingFailureException`; richer validation remains planned. |
 | Queries | Supported derived queries translated to Mango | Planned | Only operators with a documented Mango translation will be accepted. |
 | Queries | Index-compatible sorting | Planned | Sorting will require a compatible CouchDB index and predictable direction rules. |
 | Pagination | Bookmark-based continuation | Planned | Native Mango bookmarks will represent forward continuation. |

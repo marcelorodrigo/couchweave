@@ -6,10 +6,10 @@ package io.github.marcelorodrigo.couchweave.client.internal;
  * @param documentId document identifier returned by CouchDB
  * @param revision new document revision returned by CouchDB
  */
-record CouchDbWriteResult(String documentId, String revision) {
+public record CouchDbWriteResult(String documentId, String revision) {
 
     /** Ensures CouchDB returned both required write-result values. */
-    CouchDbWriteResult {
+    public CouchDbWriteResult {
         requireText(documentId, "documentId");
         requireText(revision, "revision");
     }
