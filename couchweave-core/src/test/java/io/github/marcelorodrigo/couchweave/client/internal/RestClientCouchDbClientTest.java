@@ -119,9 +119,10 @@ class RestClientCouchDbClientTest {
             respond(exchange, 200, "{\"ok\":true}");
         });
         var client = client("", "admin", "secret", Duration.ofMillis(50));
+        var pathSegments = List.of("books");
 
         // when / then
-        assertThatThrownBy(() -> client.exchange(HttpMethod.GET, List.of("books"), null))
+        assertThatThrownBy(() -> client.exchange(HttpMethod.GET, pathSegments, null))
                 .isInstanceOf(DataAccessResourceFailureException.class)
                 .hasMessageNotContaining("secret");
     }
@@ -142,9 +143,10 @@ class RestClientCouchDbClientTest {
                 Duration.ofSeconds(1),
                 Duration.ofSeconds(1));
         var client = new RestClientCouchDbClient(settings);
+        var pathSegments = List.of("books");
 
         // when / then
-        assertThatThrownBy(() -> client.exchange(HttpMethod.GET, List.of("books"), null))
+        assertThatThrownBy(() -> client.exchange(HttpMethod.GET, pathSegments, null))
                 .isInstanceOf(DataAccessResourceFailureException.class)
                 .hasCauseInstanceOf(ResourceAccessException.class)
                 .hasMessageNotContaining("secret");
@@ -160,9 +162,10 @@ class RestClientCouchDbClientTest {
                 exchange, statusCode, "{\"error\":\"request_failed\",\"reason\":\"CouchDB rejected the request\"}"));
         var client = client("", null, null, Duration.ofSeconds(1));
         var context = CouchDbRequestContext.forDocument("books", "book-42", "3-stale");
+        var pathSegments = List.of("books", "book-42");
 
         // when / then
-        assertThatThrownBy(() -> client.exchange(HttpMethod.PUT, List.of("books", "book-42"), "{}", context))
+        assertThatThrownBy(() -> client.exchange(HttpMethod.PUT, pathSegments, "{}", context))
                 .isInstanceOf(expectedType)
                 .hasMessageContaining("book-42");
     }
@@ -173,9 +176,10 @@ class RestClientCouchDbClientTest {
         // given
         startServer(exchange -> respond(exchange, 502, "not-json"));
         var client = client("", null, null, Duration.ofSeconds(1));
+        var pathSegments = List.of("books");
 
         // when / then
-        assertThatThrownBy(() -> client.exchange(HttpMethod.GET, List.of("books"), null))
+        assertThatThrownBy(() -> client.exchange(HttpMethod.GET, pathSegments, null))
                 .isInstanceOf(CouchDbResponseException.class)
                 .hasMessageContaining("unreadable error response")
                 .hasMessageNotContaining("not-json");
