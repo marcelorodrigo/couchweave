@@ -23,12 +23,19 @@ public record CouchDbClientSettings(
         Duration connectTimeout,
         Duration readTimeout) {
 
+    /** Default timeout used while establishing a connection to CouchDB. */
     public static final Duration DEFAULT_CONNECT_TIMEOUT = Duration.ofSeconds(5);
+
+    /** Default timeout used while waiting for a CouchDB response. */
     public static final Duration DEFAULT_READ_TIMEOUT = Duration.ofSeconds(30);
 
+    /** CouchDB database-name grammar accepted by the client. */
     private static final Pattern DATABASE_NAME = Pattern.compile("[a-z][a-z0-9_$()+\\-/]*");
+
+    /** Maximum database-name length permitted by CouchDB. */
     private static final int MAXIMUM_DATABASE_NAME_LENGTH = 238;
 
+    /** Validates all record components before making the settings instance available. */
     public CouchDbClientSettings {
         validateServerUri(serverUri);
         validateDatabase(database);
@@ -37,6 +44,12 @@ public record CouchDbClientSettings(
         validateTimeout(readTimeout, "readTimeout");
     }
 
+    /**
+     * Creates settings with no credentials and the standard client timeouts.
+     *
+     * @param serverUri absolute HTTP(S) URI of the CouchDB server
+     * @param database default database name
+     */
     public CouchDbClientSettings(URI serverUri, String database) {
         this(serverUri, database, null, null, DEFAULT_CONNECT_TIMEOUT, DEFAULT_READ_TIMEOUT);
     }
@@ -56,6 +69,11 @@ public record CouchDbClientSettings(
                 .formatted(serverUri, database, username, connectTimeout, readTimeout);
     }
 
+    /**
+     * Ensures the server URI is safe to use as the base for generated requests.
+     *
+     * @param serverUri URI to validate
+     */
     private static void validateServerUri(URI serverUri) {
         Objects.requireNonNull(serverUri, "serverUri must not be null");
         var scheme = serverUri.getScheme();
@@ -71,6 +89,11 @@ public record CouchDbClientSettings(
         }
     }
 
+    /**
+     * Ensures the configured database name satisfies CouchDB naming rules.
+     *
+     * @param database database name to validate
+     */
     private static void validateDatabase(String database) {
         if (database == null || database.isBlank()) {
             throw new IllegalArgumentException("database must not be blank");
@@ -81,6 +104,12 @@ public record CouchDbClientSettings(
         }
     }
 
+    /**
+     * Ensures credentials are either both absent or a complete, non-blank pair.
+     *
+     * @param username configured username
+     * @param password configured password
+     */
     private static void validateCredentials(String username, String password) {
         if ((username == null) != (password == null)) {
             throw new IllegalArgumentException("username and password must be configured together");
@@ -90,6 +119,12 @@ public record CouchDbClientSettings(
         }
     }
 
+    /**
+     * Ensures a timeout is present and represents a positive duration.
+     *
+     * @param timeout duration to validate
+     * @param propertyName setting name used in validation errors
+     */
     private static void validateTimeout(Duration timeout, String propertyName) {
         Objects.requireNonNull(timeout, propertyName + " must not be null");
         if (timeout.isZero() || timeout.isNegative()) {
