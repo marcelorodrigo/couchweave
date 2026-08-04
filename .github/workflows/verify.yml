@@ -67,10 +67,9 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: >-
-          mvn -B verify
+          ./mvnw -B -ntp -T 1C verify
           org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
           -Dsonar.projectKey=marcelorodrigo_couchweave
-          -T 1C
 
   verify:
     name: Java ${{ matrix.java }}
@@ -98,12 +97,12 @@ jobs:
           cache-dependency-path: "**/pom.xml"
 
       - name: Verify Maven reactor
-        run: ./mvnw -T 1C --batch-mode --no-transfer-progress verify
+        run: ./mvnw -B -ntp -T 1C verify
 
       - name: Generate coverage reports after failure
         if: failure()
         continue-on-error: true
-        run: ./mvnw -T 1C --batch-mode --no-transfer-progress jacoco:report jacoco:report-aggregate
+        run: ./mvnw -B -ntp -T 1C jacoco:report jacoco:report-aggregate
 
       - name: Upload failure reports
         if: failure()
