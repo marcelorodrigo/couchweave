@@ -88,6 +88,33 @@ To build the sample and every upstream module it depends on:
 ./mvnw -pl samples/couchweave-sample -am verify
 ```
 
+## Testing conventions
+
+The parent build manages JUnit Jupiter 6, AssertJ, Mockito, Surefire, Failsafe,
+and JaCoCo for every module. Add the test dependencies a module uses without
+specifying versions; the parent test toolchain supplies compatible versions.
+
+- Unit tests end in `Test` and run in Maven's `test` phase through Surefire.
+- Integration tests end in `IT`, begin with `IT`, or end in `ITCase`; Failsafe
+  runs them during `integration-test` and verifies them in `verify`.
+- Name test methods `should...`, give every test a sentence-case `@DisplayName`,
+  organize test bodies with `// given`, `// when`, and `// then`, and use
+  AssertJ for assertions.
+- Unit tests instantiate the subject directly and do not load a Spring context.
+  Use Mockito only for external collaborators.
+
+JaCoCo enforces a minimum 80% line-coverage ratio for modules that produce
+coverage data and writes a reactor aggregate report to
+`build-support/coverage/target/site/jacoco-aggregate/`.
+
+The following opt-in fixtures verify the build policy without affecting the
+normal reactor:
+
+```shell
+./mvnw -Ptest-discovery-fixture verify
+./mvnw -Pcoverage-failure-fixture verify # expected to fail JaCoCo coverage
+```
+
 ## Contributing
 
 Run the complete Maven verification build before submitting a change. Further
