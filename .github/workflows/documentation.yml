@@ -1,0 +1,44 @@
+name: Verify Documentation
+
+on:
+  pull_request:
+    branches:
+      - master
+    paths:
+      - README.md
+      - 'docs/**/*.md'
+  push:
+    branches:
+      - master
+    paths:
+      - README.md
+      - 'docs/**/*.md'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  documentation:
+    name: Documentation links
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          show-progress: false
+          fetch-tags: false
+
+      - name: Check Markdown links
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --no-progress
+            --max-retries 3
+            README.md
+            'docs/**/*.md'
+          fail: true
