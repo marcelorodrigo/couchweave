@@ -1,11 +1,15 @@
 package io.github.marcelorodrigo.couchweave.client.internal;
 
-import java.util.List;
-import org.springframework.http.HttpMethod;
+import java.util.Optional;
+import tools.jackson.databind.JsonNode;
 
 interface CouchDbClient {
 
-    CouchDbResponse exchange(HttpMethod method, List<String> pathSegments, String body);
+    CouchDbWriteResult putDocument(String database, String documentId, JsonNode document);
 
-    CouchDbResponse exchange(HttpMethod method, List<String> pathSegments, String body, CouchDbRequestContext context);
+    Optional<JsonNode> getDocument(String database, String documentId);
+
+    boolean documentExists(String database, String documentId);
+
+    CouchDbWriteResult deleteDocument(String database, String documentId, String revision);
 }
