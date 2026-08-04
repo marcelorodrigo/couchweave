@@ -33,6 +33,41 @@ jobs:
             'docs/**/*.md'
           fail: true
 
+
+  sonarcloud:
+    name: SonarCloud
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          show-progress: false
+          fetch-tags: false
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 25
+          cache: maven
+          cache-dependency-path: "**/pom.xml"
+
+      - name: Cache SonarQube packages
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+      - name: Build and analyze
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: >-
+          mvn -B verify
+          org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
+          -Dsonar.projectKey=marcelorodrigo_couchweave
+          -T 1C
+
   verify:
     name: Java ${{ matrix.java }}
     runs-on: ubuntu-latest
@@ -55,12 +90,12 @@ jobs:
           cache-dependency-path: "**/pom.xml"
 
       - name: Verify Maven reactor
-        run: ./mvnw --batch-mode --no-transfer-progress verify
+        run: ./mvnw -T 1C --batch-mode --no-transfer-progress verify
 
       - name: Generate coverage reports after failure
         if: failure()
         continue-on-error: true
-        run: ./mvnw --batch-mode --no-transfer-progress jacoco:report jacoco:report-aggregate
+        run: ./mvnw -T 1C --batch-mode --no-transfer-progress jacoco:report jacoco:report-aggregate
 
       - name: Upload failure reports
         if: failure()
