@@ -1,0 +1,21 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f8f4ee" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#151210" media="(prefers-color-scheme: dark)">
+<title>{{ if .IsHome }}{{ site.Title }} — Spring Data meets CouchDB{{ else }}{{ .Title }} — {{ site.Title }}{{ end }}</title>
+<meta name="description" content="{{ or .Description site.Params.description }}">
+<link rel="canonical" href="{{ .Permalink }}">
+<link rel="icon" href="/brand/couchweave-mark.svg" type="image/svg+xml">
+<link rel="manifest" href="/site.webmanifest">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="{{ site.Title }}">
+<meta property="og:title" content="{{ if .IsHome }}{{ site.Title }} — Spring Data meets CouchDB{{ else }}{{ .Title }}{{ end }}">
+<meta property="og:description" content="{{ or .Description site.Params.description }}">
+<meta property="og:url" content="{{ .Permalink }}">
+<meta property="og:image" content="{{ absURL "brand/social-card.png" }}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+{{ partial "assets-js.html" . }}
+{{ partial "assets-css.html" . }}

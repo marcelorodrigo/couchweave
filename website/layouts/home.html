@@ -1,0 +1,97 @@
+{{ define "main" }}
+  <section class="hero-grid overflow-hidden border-b border-line">
+    <div class="site-shell grid gap-14 py-20 lg:grid-cols-[1.2fr_0.8fr] lg:items-center lg:py-28">
+      <div class="min-w-0">
+        <p class="eyebrow">{{ .Params.hero.eyebrow }}</p>
+        <h1 class="mt-5 max-w-4xl text-balance text-5xl font-semibold tracking-[-0.045em] sm:text-6xl lg:text-7xl">
+          {{ .Params.hero.title }}
+        </h1>
+        <p class="mt-7 max-w-2xl text-pretty text-lg leading-8 text-muted sm:text-xl">
+          {{ .Params.hero.summary }}
+        </p>
+        <div class="mt-9 flex flex-wrap gap-4">
+          <a class="button button-primary" href="{{ .Params.hero.primary.url }}">{{ .Params.hero.primary.label }}</a>
+          <a class="button button-secondary" href="{{ .Params.hero.secondary.url }}">{{ .Params.hero.secondary.label }}</a>
+        </div>
+      </div>
+      <div class="relative mx-auto min-w-0 w-full max-w-md" aria-hidden="true">
+        <div class="absolute inset-8 rounded-full bg-primary/20 blur-3xl"></div>
+        <div class="code-card relative rotate-1">
+          <div class="flex items-center gap-2 border-b border-line px-5 py-4">
+            <span class="size-2.5 rounded-full bg-primary"></span>
+            <span class="size-2.5 rounded-full bg-secondary"></span>
+            <span class="size-2.5 rounded-full bg-muted/40"></span>
+            <span class="ml-auto font-mono text-xs text-muted">ProfileRepository.java</span>
+          </div>
+          <pre class="max-w-full overflow-x-auto p-6 text-sm leading-7"><code><span class="code-keyword">interface</span> <span class="code-type">ProfileRepository</span>
+    <span class="code-keyword">extends</span> CouchRepository&lt;Profile, String&gt; {
+
+  Window&lt;Profile&gt; <span class="code-call">findByCity</span>(
+      String city,
+      ScrollPosition position);
+}</code></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="site-shell py-20 lg:py-24" aria-labelledby="capabilities-title">
+    <div class="section-heading">
+      <p class="eyebrow">The intended fit</p>
+      <h2 id="capabilities-title">A Spring-shaped API with CouchDB-shaped behavior.</h2>
+    </div>
+    <div class="mt-12 grid gap-5 md:grid-cols-3">
+      {{ range $index, $capability := .Params.capabilities }}
+        {{ partial "feature-card.html" (dict "index" (add $index 1) "title" $capability.title "description" $capability.description) }}
+      {{ end }}
+    </div>
+  </section>
+
+  <section class="border-y border-line bg-surface/70">
+    <div class="site-shell grid gap-12 py-20 lg:grid-cols-[0.75fr_1.25fr] lg:py-24">
+      <div class="section-heading">
+        <p class="eyebrow">Design principles</p>
+        <h2>Correctness lives in the boundaries.</h2>
+        <p>CouchWeave should be familiar where Spring Data and CouchDB agree—and explicit where they do not.</p>
+      </div>
+      <div class="divide-y divide-line border-y border-line">
+        {{ range .Params.principles }}
+          <article class="grid gap-3 py-7 sm:grid-cols-[11rem_1fr] sm:gap-8">
+            <h3 class="font-semibold text-ink">{{ .title }}</h3>
+            <p class="leading-7 text-muted">{{ .description }}</p>
+          </article>
+        {{ end }}
+      </div>
+    </div>
+  </section>
+
+  <section class="site-shell py-20 lg:py-24" aria-labelledby="modules-title">
+    <div class="section-heading max-w-3xl">
+      <p class="eyebrow">Planned modules</p>
+      <h2 id="modules-title">A small surface with clear responsibilities.</h2>
+      <p>The exact module structure will be proven by the first implementation milestone.</p>
+    </div>
+    <div class="mt-12 overflow-hidden rounded-3xl border border-line bg-surface shadow-soft">
+      {{ range $index, $module := .Params.modules }}
+        <div class="grid gap-3 border-b border-line p-6 last:border-b-0 md:grid-cols-[18rem_1fr] md:items-center md:px-8">
+          <code class="font-mono text-sm font-semibold text-primary">{{ $module.name }}</code>
+          <p class="leading-7 text-muted">{{ $module.description }}</p>
+        </div>
+      {{ end }}
+    </div>
+  </section>
+
+  <section class="site-shell pb-20 lg:pb-28">
+    <div class="cta-panel">
+      <div>
+        <p class="eyebrow text-primary-soft">Follow the design as it becomes code</p>
+        <h2 class="mt-4 max-w-2xl text-3xl font-semibold tracking-tight text-white sm:text-4xl">The contracts come before the convenience.</h2>
+        <p class="mt-4 max-w-2xl text-lg leading-8 text-white/70">See what CouchWeave is defining now, or follow the repository as the first implementation takes shape.</p>
+      </div>
+      <div class="flex flex-wrap gap-4 lg:justify-end">
+        <a class="button bg-white text-stone-950 hover:bg-stone-100" href="/roadmap/">Read the roadmap</a>
+        <a class="button border border-white/25 text-white hover:bg-white/10" href="{{ site.Params.repositoryURL }}">View on GitHub</a>
+      </div>
+    </div>
+  </section>
+{{ end }}

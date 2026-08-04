@@ -3,6 +3,9 @@
 CouchWeave is an independent Java project aiming to provide repository-style,
 Spring Data-compatible access to Apache CouchDB.
 
+Visit [couchweave.marcelorodrigo.com](https://couchweave.marcelorodrigo.com/)
+for the project overview, roadmap, design rationale, and documentation status.
+
 > [!IMPORTANT]
 > CouchWeave is in its initial design phase. It does not yet publish usable
 > artifacts or provide a working CouchDB integration.
@@ -19,10 +22,11 @@ repository-style integrations. CouchWeave addresses a different gap: a current
 Spring Data store module that combines repository and mapping conventions with
 CouchDB's native revision, query, indexing, and pagination semantics.
 
-The [Why CouchWeave Exists](docs/why-couchweave.md) page describes the projects
-that informed this direction, the problems each one solves, and the integration
-work that remains. The comparison is intended to recognize prior work and make
-CouchWeave's scope explicit, not to rank or criticize other projects.
+The [Why CouchWeave Exists](https://couchweave.marcelorodrigo.com/why/) page
+describes the projects that informed this direction, the problems each one
+solves, and the integration work that remains. The comparison is intended to
+recognize prior work and make CouchWeave's scope explicit, not to rank or
+criticize other projects.
 
 The planned capabilities include:
 

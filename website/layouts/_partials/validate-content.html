@@ -1,0 +1,23 @@
+{{- if not .Title -}}
+  {{- errorf "Content at %q is missing a title" .Path -}}
+{{- end -}}
+{{- if and (ne .Kind "404") (not .Description) -}}
+  {{- errorf "Content at %q is missing a description" .Path -}}
+{{- end -}}
+{{- if and .Description (gt (len .Description) 160) -}}
+  {{- errorf "Description at %q exceeds 160 characters" .Path -}}
+{{- end -}}
+{{- if .IsHome -}}
+  {{- with .Params.hero -}}
+    {{- if not (and .eyebrow .title .summary .primary.label .primary.url .secondary.label .secondary.url) -}}
+      {{- errorf "Home hero requires eyebrow, title, summary, and two complete calls to action" -}}
+    {{- end -}}
+  {{- else -}}
+    {{- errorf "Home page requires hero configuration" -}}
+  {{- end -}}
+  {{- range $collection := slice "capabilities" "principles" "modules" -}}
+    {{- if not (index $.Params $collection) -}}
+      {{- errorf "Home page requires a non-empty %s collection" $collection -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
