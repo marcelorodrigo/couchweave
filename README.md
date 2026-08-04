@@ -57,6 +57,7 @@ The Maven reactor currently contains:
 | `couchweave-spring-boot` | Spring Boot auto-configuration |
 | `couchweave-spring-boot-starter` | Opinionated dependency entry point for Spring Boot applications |
 | `samples/couchweave-sample` | Non-publishable sample used to verify the complete reactor and test lifecycle |
+| `build-support/couchdb-test-support` | Non-published CouchDB Testcontainers fixture for datastore integration tests |
 
 ## Project status
 
@@ -111,6 +112,18 @@ specifying versions; the parent test toolchain supplies compatible versions.
 JaCoCo enforces a minimum 80% line-coverage ratio for modules that produce
 coverage data and writes a reactor aggregate report to
 `build-support/coverage/target/site/jacoco-aggregate/`.
+
+### CouchDB integration tests
+
+Datastore-facing tests can depend on `couchweave-couchdb-test-support` with
+`test` scope, annotate the test class with `@CouchDbIntegrationTest`, and accept
+`CouchDbTestDatabase` as a constructor or test-method parameter. The harness
+starts `couchdb:3.5` on a dynamic port, provides its admin credentials, and
+creates then removes an isolated database for each test class.
+
+Docker or Podman must be running to execute these tests. Local runs skip them
+with an actionable message when no container runtime is available; CI fails in
+that case so the real-CouchDB smoke test cannot be skipped silently.
 
 The following opt-in fixtures verify the build policy without affecting the
 normal reactor:
