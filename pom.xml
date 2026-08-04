@@ -35,7 +35,7 @@
         <assertj.version>3.27.7</assertj.version>
         <jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
         <jacoco.line.coverage.minimum>0.80</jacoco.line.coverage.minimum>
-        <junit-jupiter.version>6.0.1</junit-jupiter.version>
+        <junit-jupiter.version>6.1.2</junit-jupiter.version>
         <maven-source-plugin.version>3.4.0</maven-source-plugin.version>
         <maven-surefire-plugin.version>3.5.5</maven-surefire-plugin.version>
         <maven.deploy.skip>true</maven.deploy.skip>
