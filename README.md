@@ -12,6 +12,18 @@ Spring Data-compatible access to Apache CouchDB.
 CouchWeave will build on Spring Data Commons to offer a familiar repository
 programming model while preserving CouchDB-specific concepts and behavior.
 
+## Why CouchWeave?
+
+The Java ecosystem already offers capable CouchDB clients and earlier
+repository-style integrations. CouchWeave addresses a different gap: a current
+Spring Data store module that combines repository and mapping conventions with
+CouchDB's native revision, query, indexing, and pagination semantics.
+
+The [Why CouchWeave Exists](docs/why-couchweave.md) page describes the projects
+that informed this direction, the problems each one solves, and the integration
+work that remains. The comparison is intended to recognize prior work and make
+CouchWeave's scope explicit, not to rank or criticize other projects.
+
 The planned capabilities include:
 
 - CRUD repositories for CouchDB documents
