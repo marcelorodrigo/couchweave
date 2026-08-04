@@ -1,0 +1,7 @@
+packages: []
+
+nodeLinker: hoisted
+preferSymlinkedExecutables: true
+
+allowBuilds:
+  "@parcel/watcher": true

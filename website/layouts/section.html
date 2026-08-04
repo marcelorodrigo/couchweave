@@ -1,0 +1,22 @@
+{{ define "main" }}
+  <article class="site-shell py-16 lg:py-20">
+    <header class="max-w-3xl border-b border-line pb-10">
+      <p class="eyebrow">CouchWeave</p>
+      <h1 class="mt-4 text-balance text-4xl font-semibold tracking-tight sm:text-5xl">{{ .Title }}</h1>
+      <p class="mt-5 text-pretty text-lg leading-8 text-muted">{{ .Description }}</p>
+    </header>
+    <div class="prose prose-stone mt-12 max-w-3xl prose-headings:scroll-mt-24 prose-a:text-primary prose-a:decoration-primary/30 prose-a:underline-offset-4 hover:prose-a:decoration-primary dark:prose-invert">
+      {{ .Content }}
+    </div>
+    {{ with .Pages }}
+      <div class="mt-12 grid gap-5 md:grid-cols-2">
+        {{ range . }}
+          <a class="feature-card" href="{{ .RelPermalink }}">
+            <h2 class="text-lg font-semibold">{{ .LinkTitle }}</h2>
+            <p class="mt-2 text-muted">{{ .Description }}</p>
+          </a>
+        {{ end }}
+      </div>
+    {{ end }}
+  </article>
+{{ end }}

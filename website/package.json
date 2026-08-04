@@ -1,0 +1,22 @@
+{
+  "name": "couchweave-website",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.10.0",
+  "scripts": {
+    "dev": "hugo server --buildDrafts --disableFastRender",
+    "build": "hugo --gc --minify --panicOnWarning",
+    "build:cloudflare": "hugo --gc --minify --panicOnWarning --cacheDir \"$PWD/.cache\" --baseURL \"${HUGO_BASEURL:-$CF_PAGES_URL}\"",
+    "test": "node --test tests/theme.test.mjs",
+    "test:output": "node --test tests/output.test.mjs",
+    "validate:html": "html-validate \"public/**/*.html\"",
+    "check": "pnpm test && pnpm build && pnpm run test:output && pnpm run validate:html"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "4.3.3",
+    "@tailwindcss/typography": "0.5.20",
+    "html-validate": "11.5.6",
+    "tailwindcss": "4.3.3"
+  }
+}

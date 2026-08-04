@@ -1,0 +1,18 @@
+<footer class="border-t border-line bg-surface/60">
+  <div class="site-shell grid gap-10 py-12 md:grid-cols-[1fr_auto] md:items-end">
+    <div>
+      <a class="flex w-fit items-center gap-3 font-semibold" href="/">
+        <img class="size-8" src="/brand/couchweave-mark.svg" alt="" width="32" height="32">
+        CouchWeave
+      </a>
+      <p class="mt-4 max-w-xl text-sm leading-6 text-muted">An independent project exploring Spring Data-compatible access to Apache CouchDB.</p>
+      <p class="mt-3 text-xs leading-5 text-muted">Apache CouchDB and Spring are trademarks of their respective owners. CouchWeave is not affiliated with or endorsed by them.</p>
+    </div>
+    <nav class="flex flex-wrap gap-x-6 gap-y-3 text-sm" aria-label="Footer navigation">
+      {{ range site.Menus.footer }}
+        <a class="text-muted hover:text-ink" href="{{ .URL }}">{{ .Name }}</a>
+      {{ end }}
+      <a class="text-muted hover:text-ink" href="{{ site.Params.repositoryURL }}">GitHub</a>
+    </nav>
+  </div>
+</footer>

@@ -1,0 +1,12 @@
+{{- with resources.Get "js/theme.js" -}}
+  {{- $options := dict "format" "iife" "targetPath" "js/theme.js" "minify" (not hugo.IsDevelopment) -}}
+  {{- with . | js.Build $options -}}
+    {{- if hugo.IsDevelopment -}}
+      <script src="{{ .RelPermalink }}"></script>
+    {{- else -}}
+      {{- with . | fingerprint -}}
+        <script src="{{ .RelPermalink }}" integrity="{{ .Data.Integrity }}" crossorigin="anonymous"></script>
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}

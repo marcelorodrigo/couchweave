@@ -1,0 +1,12 @@
+{
+  "extends": ["html-validate:recommended"],
+  "rules": {
+    "attr-quotes": "off",
+    "doctype-style": "off",
+    "heading-level": "off",
+    "long-title": ["error", { "maxlength": 70 }],
+    "no-inline-style": "error",
+    "prefer-native-element": "off",
+    "wcag/h30": "error"
+  }
+}
