@@ -1,27 +1,25 @@
 package io.github.marcelorodrigo.couchweave.sample;
 
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.w3c.dom.Document;
-import org.w3c.dom.NodeList;
+import static org.assertj.core.api.Assertions.assertThat;
 
-import javax.xml.XMLConstants;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import javax.xml.XMLConstants;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathFactory;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
 
 class DocumentationPolicyTest {
 
-    private static final Pattern PUBLIC_COORDINATE = Pattern.compile(
-            "`(io\\.github\\.marcelorodrigo:couchweave-[a-z-]+)`"
-    );
+    private static final Pattern PUBLIC_COORDINATE =
+            Pattern.compile("`(io\\.github\\.marcelorodrigo:couchweave-[a-z-]+)`");
 
     @Test
     @DisplayName("should match documented public artifacts to deployable reactor modules")
@@ -47,8 +45,12 @@ class DocumentationPolicyTest {
         var parentProject = parse(reactorRoot.resolve("pom.xml"));
 
         // when
-        var javaVersion = text(parentProject, "/*[local-name()='project']/*[local-name()='properties']/*[local-name()='java.version']");
-        var springBootVersion = text(parentProject, "/*[local-name()='project']/*[local-name()='properties']/*[local-name()='spring-boot.version']");
+        var javaVersion = text(
+                parentProject,
+                "/*[local-name()='project']/*[local-name()='properties']/*[local-name()='java.version']");
+        var springBootVersion = text(
+                parentProject,
+                "/*[local-name()='project']/*[local-name()='properties']/*[local-name()='spring-boot.version']");
         var springBootReleaseLine = springBootVersion.substring(0, springBootVersion.lastIndexOf('.') + 1) + "x";
 
         // then
@@ -81,13 +83,16 @@ class DocumentationPolicyTest {
     private static Set<String> deployableCoordinates(Path reactorRoot) throws Exception {
         var parentProject = parse(reactorRoot.resolve("pom.xml"));
         var groupId = text(parentProject, "/*[local-name()='project']/*[local-name()='groupId']");
-        var modules = nodes(parentProject, "/*[local-name()='project']/*[local-name()='modules']/*[local-name()='module']");
+        var modules =
+                nodes(parentProject, "/*[local-name()='project']/*[local-name()='modules']/*[local-name()='module']");
         var coordinates = new LinkedHashSet<String>();
 
         for (var index = 0; index < modules.getLength(); index++) {
             var modulePath = modules.item(index).getTextContent().trim();
             var moduleProject = parse(reactorRoot.resolve(modulePath).resolve("pom.xml"));
-            var deploySkip = text(moduleProject, "/*[local-name()='project']/*[local-name()='properties']/*[local-name()='maven.deploy.skip']");
+            var deploySkip = text(
+                    moduleProject,
+                    "/*[local-name()='project']/*[local-name()='properties']/*[local-name()='maven.deploy.skip']");
             if ("false".equals(deploySkip)) {
                 var artifactId = text(moduleProject, "/*[local-name()='project']/*[local-name()='artifactId']");
                 coordinates.add(groupId + ":" + artifactId);
@@ -108,12 +113,13 @@ class DocumentationPolicyTest {
     }
 
     private static String text(Document document, String expression) throws Exception {
-        return XPathFactory.newInstance().newXPath().evaluate(expression, document).trim();
+        return XPathFactory.newInstance()
+                .newXPath()
+                .evaluate(expression, document)
+                .trim();
     }
 
     private static NodeList nodes(Document document, String expression) throws Exception {
-        return (NodeList) XPathFactory.newInstance()
-                .newXPath()
-                .evaluate(expression, document, XPathConstants.NODESET);
+        return (NodeList) XPathFactory.newInstance().newXPath().evaluate(expression, document, XPathConstants.NODESET);
     }
 }
