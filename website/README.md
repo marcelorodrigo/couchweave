@@ -5,7 +5,7 @@ It is intentionally independent of the future Java build.
 
 ## Local development
 
-Install Hugo Extended 0.164.0, Node 24.14.0, and pnpm 11.10.0, then run:
+Install Hugo Extended 0.164.0, Node 26.6.0, and pnpm 11.10.0, then run:
 
 ```shell
 pnpm install --frozen-lockfile
@@ -30,7 +30,7 @@ Connect `marcelorodrigo/couchweave` using these settings:
 | Build output directory | `public` |
 | Build watch include | `website/*` |
 
-Set `HUGO_VERSION=0.164.0`, `NODE_VERSION=24.14.0`, and
+Set `HUGO_VERSION=0.164.0`, `NODE_VERSION=26.6.0`, and
 `PNPM_VERSION=11.10.0` for production and previews. Set
 `HUGO_BASEURL=https://couchweave.marcelorodrigo.com/` for production only;
 preview builds use Cloudflare's `CF_PAGES_URL` automatically.
