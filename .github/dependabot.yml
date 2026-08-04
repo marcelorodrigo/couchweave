@@ -1,0 +1,25 @@
+version: 2
+
+updates:
+  - package-ecosystem: "maven"
+    directories:
+      - "/"
+      - "/couchweave-core"
+      - "/couchweave-spring-boot"
+      - "/couchweave-spring-boot-starter"
+      - "/samples/couchweave-sample"
+      - "/build-support/coverage"
+      - "/build-support/test-fixtures/discovery"
+      - "/build-support/test-fixtures/coverage-failure"
+    schedule:
+      interval: "daily"
+
+  - package-ecosystem: "npm"
+    directory: "/website"
+    schedule:
+      interval: "daily"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "daily"
