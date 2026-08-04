@@ -33,6 +33,8 @@ import org.springframework.dao.InvalidDataAccessResourceUsageException;
 import org.springframework.dao.PermissionDeniedDataAccessException;
 import org.springframework.http.HttpMethod;
 import org.springframework.web.client.ResourceAccessException;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 class RestClientCouchDbClientTest {
 
@@ -186,6 +188,132 @@ class RestClientCouchDbClientTest {
     }
 
     @Test
+    @DisplayName("should put a raw document and return the server revision")
+    void shouldPutARawDocumentAndReturnTheServerRevision() throws IOException, JacksonException {
+        // given
+        var request = new AtomicReference<HttpExchange>();
+        var requestBody = new AtomicReference<String>();
+        startServer(exchange -> {
+            request.set(exchange);
+            requestBody.set(new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8));
+            respond(exchange, 201, "{\"ok\":true,\"id\":\"book/a ü\",\"rev\":\"1-created\"}");
+        });
+        var client = client("", null, null, Duration.ofSeconds(1));
+        var document = new ObjectMapper().readTree("{\"_id\":\"book/a ü\",\"title\":\"CouchWeave\"}");
+
+        // when
+        var result = client.putDocument("books", "book/a ü", document);
+
+        // then
+        assertThat(result).isEqualTo(new CouchDbWriteResult("book/a ü", "1-created"));
+        assertThat(request.get().getRequestMethod()).isEqualTo("PUT");
+        assertThat(request.get().getRequestURI().getRawPath()).isEqualTo("/books/book%2Fa%20%C3%BC");
+        assertThat(requestBody.get()).isEqualTo("{\"_id\":\"book/a ü\",\"title\":\"CouchWeave\"}");
+    }
+
+    @Test
+    @DisplayName("should fetch a raw document by ID")
+    void shouldFetchARawDocumentById() throws IOException {
+        // given
+        startServer(exchange ->
+                respond(exchange, 200, "{\"_id\":\"book-42\",\"_rev\":\"1-created\",\"title\":\"CouchWeave\"}"));
+        var client = client("", null, null, Duration.ofSeconds(1));
+
+        // when
+        var document = client.getDocument("books", "book-42");
+
+        // then
+        assertThat(document)
+                .isPresent()
+                .get()
+                .extracting(value -> value.get("title").stringValue())
+                .isEqualTo("CouchWeave");
+    }
+
+    @Test
+    @DisplayName("should return an empty result when a document is not found")
+    void shouldReturnAnEmptyResultWhenADocumentIsNotFound() throws IOException {
+        // given
+        startServer(exchange -> respond(exchange, 404, "{\"error\":\"not_found\",\"reason\":\"missing\"}"));
+        var client = client("", null, null, Duration.ofSeconds(1));
+
+        // when
+        var document = client.getDocument("books", "missing");
+
+        // then
+        assertThat(document).isEmpty();
+    }
+
+    @Test
+    @DisplayName("should check document existence without reading its body")
+    void shouldCheckDocumentExistenceWithoutReadingItsBody() throws IOException {
+        // given
+        var method = new AtomicReference<String>();
+        startServer(exchange -> {
+            method.set(exchange.getRequestMethod());
+            respondWithoutBody(exchange, 200);
+        });
+        var client = client("", null, null, Duration.ofSeconds(1));
+
+        // when
+        var exists = client.documentExists("books", "book-42");
+
+        // then
+        assertThat(exists).isTrue();
+        assertThat(method.get()).isEqualTo("HEAD");
+    }
+
+    @Test
+    @DisplayName("should report that a missing document does not exist")
+    void shouldReportThatAMissingDocumentDoesNotExist() throws IOException {
+        // given
+        startServer(exchange -> respondWithoutBody(exchange, 404));
+        var client = client("", null, null, Duration.ofSeconds(1));
+
+        // when
+        var exists = client.documentExists("books", "missing");
+
+        // then
+        assertThat(exists).isFalse();
+    }
+
+    @Test
+    @DisplayName("should delete a document with its encoded revision")
+    void shouldDeleteADocumentWithItsEncodedRevision() throws IOException {
+        // given
+        var request = new AtomicReference<HttpExchange>();
+        startServer(exchange -> {
+            request.set(exchange);
+            respond(exchange, 200, "{\"ok\":true,\"id\":\"book/a\",\"rev\":\"3-deleted\"}");
+        });
+        var client = client("", null, null, Duration.ofSeconds(1));
+
+        // when
+        var result = client.deleteDocument("books", "book/a", "2-current/value");
+
+        // then
+        assertThat(result).isEqualTo(new CouchDbWriteResult("book/a", "3-deleted"));
+        assertThat(request.get().getRequestMethod()).isEqualTo("DELETE");
+        assertThat(request.get().getRequestURI().getRawPath()).isEqualTo("/books/book%2Fa");
+        assertThat(request.get().getRequestURI().getRawQuery()).isEqualTo("rev=2-current/value");
+    }
+
+    @Test
+    @DisplayName("should include the attempted revision when a document write conflicts")
+    void shouldIncludeTheAttemptedRevisionWhenADocumentWriteConflicts() throws IOException, JacksonException {
+        // given
+        startServer(exchange ->
+                respond(exchange, 409, "{\"error\":\"conflict\",\"reason\":\"Document update conflict.\"}"));
+        var client = client("", null, null, Duration.ofSeconds(1));
+        var document = new ObjectMapper().readTree("{\"_id\":\"book-42\",\"_rev\":\"1-stale\"}");
+
+        // when / then
+        assertThatThrownBy(() -> client.putDocument("books", "book-42", document))
+                .isInstanceOf(CouchOptimisticLockingFailureException.class)
+                .hasMessageContaining("1-stale");
+    }
+
+    @Test
     @DisplayName("should safely share one client instance across concurrent requests")
     void shouldSafelyShareOneClientInstanceAcrossConcurrentRequests() throws Exception {
         // given
@@ -238,6 +366,11 @@ class RestClientCouchDbClientTest {
         exchange.getResponseHeaders().set("Content-Type", "application/json");
         exchange.sendResponseHeaders(statusCode, bytes.length);
         exchange.getResponseBody().write(bytes);
+        exchange.close();
+    }
+
+    private void respondWithoutBody(HttpExchange exchange, int statusCode) throws IOException {
+        exchange.sendResponseHeaders(statusCode, -1);
         exchange.close();
     }
 

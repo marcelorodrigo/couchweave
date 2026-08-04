@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 import io.github.marcelorodrigo.couchweave.client.CouchDbClientSettings;
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -37,6 +38,20 @@ class CouchDbUriBuilderTest {
 
         // then
         assertThat(uri).hasToString("https://couch.example.test/base");
+    }
+
+    @Test
+    @DisplayName("should encode revision query parameters exactly once")
+    void shouldEncodeRevisionQueryParametersExactlyOnce() {
+        // given
+        var builder =
+                new CouchDbUriBuilder(new CouchDbClientSettings(URI.create("https://couch.example.test"), "books"));
+
+        // when
+        var uri = builder.build(List.of("books", "book/one"), Map.of("rev", "2-a/b % ü"));
+
+        // then
+        assertThat(uri).hasToString("https://couch.example.test/books/book%2Fone?rev=2-a/b%20%25%20%C3%BC");
     }
 
     @Test
