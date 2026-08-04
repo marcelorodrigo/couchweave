@@ -1,22 +1,20 @@
 package io.github.marcelorodrigo.couchweave.testsupport.couchdb;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.lang.reflect.Proxy;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.utility.DockerImageName;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 class CouchDbIntegrationExtensionLifecycleTest {
 
@@ -28,30 +26,27 @@ class CouchDbIntegrationExtensionLifecycleTest {
         var root = rootContext(rootStore);
         var firstContext = classContext(root, FirstTestClass.class, new InMemoryStore(), Optional.empty());
         var secondContext = classContext(
-            root,
-            SecondTestClass.class,
-            new InMemoryStore(),
-            Optional.of(new AssertionError("simulated test failure"))
-        );
+                root,
+                SecondTestClass.class,
+                new InMemoryStore(),
+                Optional.of(new AssertionError("simulated test failure")));
         var containerStarts = new AtomicInteger();
         var clients = new ArrayList<RecordingAdminClient>();
         var extension = new CouchDbIntegrationExtension(
-            () -> {
-                containerStarts.incrementAndGet();
-                return new CouchDbContainerResource(
-                    new GenericContainer<>(DockerImageName.parse("couchdb:3.5")),
-                    URI.create("http://localhost:49152"),
-                    "admin",
-                    "secret"
-                );
-            },
-            (serverUri, username, password) -> {
-                var client = new RecordingAdminClient(serverUri, username, password);
-                clients.add(client);
-                return client;
-            },
-            new CouchDbDatabaseNameGenerator()
-        );
+                () -> {
+                    containerStarts.incrementAndGet();
+                    return new CouchDbContainerResource(
+                            new GenericContainer<>(DockerImageName.parse("couchdb:3.5")),
+                            URI.create("http://localhost:49152"),
+                            "admin",
+                            "secret");
+                },
+                (serverUri, username, password) -> {
+                    var client = new RecordingAdminClient(serverUri, username, password);
+                    clients.add(client);
+                    return client;
+                },
+                new CouchDbDatabaseNameGenerator());
 
         // when
         extension.beforeAll(firstContext);
@@ -62,9 +57,9 @@ class CouchDbIntegrationExtensionLifecycleTest {
         // then
         assertThat(containerStarts).hasValue(1);
         assertThat(clients)
-            .hasSize(2)
-            .extracting(client -> client.createdDatabase.databaseName())
-            .doesNotHaveDuplicates();
+                .hasSize(2)
+                .extracting(client -> client.createdDatabase.databaseName())
+                .doesNotHaveDuplicates();
         assertThat(clients).allSatisfy(client -> {
             assertThat(client.healthChecks).isOne();
             assertThat(client.deletedDatabaseName).isEqualTo(client.createdDatabase.databaseName());
@@ -80,11 +75,10 @@ class CouchDbIntegrationExtensionLifecycleTest {
     }
 
     private ExtensionContext classContext(
-        ExtensionContext root,
-        Class<?> testClass,
-        ExtensionContext.Store classStore,
-        Optional<Throwable> executionException
-    ) {
+            ExtensionContext root,
+            Class<?> testClass,
+            ExtensionContext.Store classStore,
+            Optional<Throwable> executionException) {
         return context((proxy, method, arguments) -> switch (method.getName()) {
             case "getRoot" -> root;
             case "getStore" -> classStore;
@@ -96,10 +90,9 @@ class CouchDbIntegrationExtensionLifecycleTest {
 
     private ExtensionContext context(Invocation invocation) {
         return (ExtensionContext) Proxy.newProxyInstance(
-            getClass().getClassLoader(),
-            new Class<?>[] {ExtensionContext.class},
-            (proxy, method, arguments) -> invocation.invoke(proxy, method, arguments)
-        );
+                getClass().getClassLoader(),
+                new Class<?>[] {ExtensionContext.class},
+                (proxy, method, arguments) -> invocation.invoke(proxy, method, arguments));
     }
 
     private interface Invocation {
@@ -114,8 +107,11 @@ class CouchDbIntegrationExtensionLifecycleTest {
         private int healthChecks;
 
         private RecordingAdminClient(URI serverUri, String username, String password) {
-            super(request -> new CouchDbHttpResponse(request.uri(), 200, "{\"status\":\"ok\"}"),
-                serverUri, username, password);
+            super(
+                    request -> new CouchDbHttpResponse(request.uri(), 200, "{\"status\":\"ok\"}"),
+                    serverUri,
+                    username,
+                    password);
         }
 
         @Override
@@ -126,12 +122,11 @@ class CouchDbIntegrationExtensionLifecycleTest {
         @Override
         CouchDbTestDatabase createDatabase(String databaseName) {
             createdDatabase = new CouchDbTestDatabase(
-                URI.create("http://localhost:49152"),
-                URI.create("http://localhost:49152/" + databaseName),
-                databaseName,
-                "admin",
-                "secret"
-            );
+                    URI.create("http://localhost:49152"),
+                    URI.create("http://localhost:49152/" + databaseName),
+                    databaseName,
+                    "admin",
+                    "secret");
             return createdDatabase;
         }
 
@@ -166,11 +161,7 @@ class CouchDbIntegrationExtensionLifecycleTest {
         }
 
         @Override
-        public <K, V> V getOrComputeIfAbsent(
-            K key,
-            Function<? super K, ? extends V> creator,
-            Class<V> requiredType
-        ) {
+        public <K, V> V getOrComputeIfAbsent(K key, Function<? super K, ? extends V> creator, Class<V> requiredType) {
             return requiredType.cast(getOrComputeIfAbsent(key, creator));
         }
 
@@ -195,9 +186,7 @@ class CouchDbIntegrationExtensionLifecycleTest {
         }
     }
 
-    private static final class FirstTestClass {
-    }
+    private static final class FirstTestClass {}
 
-    private static final class SecondTestClass {
-    }
+    private static final class SecondTestClass {}
 }

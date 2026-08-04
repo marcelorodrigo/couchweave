@@ -2,7 +2,6 @@ package io.github.marcelorodrigo.couchweave.testsupport.couchdb;
 
 import java.net.URI;
 import java.util.UUID;
-
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
@@ -19,12 +18,7 @@ final class CouchDbContainerResource implements ExtensionContext.Store.Closeable
     private final String username;
     private final String password;
 
-    CouchDbContainerResource(
-        GenericContainer<?> container,
-        URI serverUri,
-        String username,
-        String password
-    ) {
+    CouchDbContainerResource(GenericContainer<?> container, URI serverUri, String username, String password) {
         this.container = container;
         this.serverUri = serverUri;
         this.username = username;
@@ -34,10 +28,10 @@ final class CouchDbContainerResource implements ExtensionContext.Store.Closeable
     static CouchDbContainerResource start() {
         var password = UUID.randomUUID().toString();
         var container = new GenericContainer<>(DockerImageName.parse(IMAGE_NAME))
-            .withEnv("COUCHDB_USER", USERNAME)
-            .withEnv("COUCHDB_PASSWORD", password)
-            .withExposedPorts(COUCHDB_PORT)
-            .waitingFor(Wait.forHttp("/_up").forPort(COUCHDB_PORT).forStatusCode(200));
+                .withEnv("COUCHDB_USER", USERNAME)
+                .withEnv("COUCHDB_PASSWORD", password)
+                .withExposedPorts(COUCHDB_PORT)
+                .waitingFor(Wait.forHttp("/_up").forPort(COUCHDB_PORT).forStatusCode(200));
 
         try {
             container.start();
@@ -45,7 +39,8 @@ final class CouchDbContainerResource implements ExtensionContext.Store.Closeable
             throw DockerAvailability.startupFailure(exception, "true".equalsIgnoreCase(System.getenv("CI")));
         }
 
-        var serverUri = URI.create("http://%s:%d".formatted(container.getHost(), container.getMappedPort(COUCHDB_PORT)));
+        var serverUri =
+                URI.create("http://%s:%d".formatted(container.getHost(), container.getMappedPort(COUCHDB_PORT)));
         return new CouchDbContainerResource(container, serverUri, USERNAME, password);
     }
 

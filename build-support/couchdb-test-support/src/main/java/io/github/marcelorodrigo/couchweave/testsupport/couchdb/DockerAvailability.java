@@ -4,8 +4,7 @@ import org.opentest4j.TestAbortedException;
 
 final class DockerAvailability {
 
-    private DockerAvailability() {
-    }
+    private DockerAvailability() {}
 
     static RuntimeException startupFailure(RuntimeException cause, boolean continuousIntegration) {
         if (!isUnavailable(cause)) {
@@ -13,7 +12,7 @@ final class DockerAvailability {
         }
 
         var message = "Docker is unavailable. Start Docker or Podman, or configure Testcontainers."
-            + " CouchDB integration tests cannot run without a container runtime.";
+                + " CouchDB integration tests cannot run without a container runtime.";
         if (continuousIntegration) {
             return new CouchDbTestHarnessException(message, cause);
         }

@@ -1,13 +1,11 @@
 package io.github.marcelorodrigo.couchweave.testsupport.couchdb;
 
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
+import static org.assertj.core.api.Assertions.assertThat;
 
+import java.lang.reflect.Proxy;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ParameterContext;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 class CouchDbIntegrationExtensionTest {
 
@@ -39,22 +37,19 @@ class CouchDbIntegrationExtensionTest {
         assertThat(supported).isFalse();
     }
 
-    private ParameterContext parameterContextFor(String methodName, Class<?> parameterType) throws NoSuchMethodException {
+    private ParameterContext parameterContextFor(String methodName, Class<?> parameterType)
+            throws NoSuchMethodException {
         var method = getClass().getDeclaredMethod(methodName, parameterType);
         return (ParameterContext) Proxy.newProxyInstance(
-            getClass().getClassLoader(),
-            new Class<?>[] {ParameterContext.class},
-            (proxy, invokedMethod, arguments) -> invokedMethod.getName().equals("getParameter")
-                ? method.getParameters()[0]
-                : null
-        );
+                getClass().getClassLoader(),
+                new Class<?>[] {ParameterContext.class},
+                (proxy, invokedMethod, arguments) ->
+                        invokedMethod.getName().equals("getParameter") ? method.getParameters()[0] : null);
     }
 
     @SuppressWarnings("unused")
-    private void usesCouchDbDatabase(CouchDbTestDatabase database) {
-    }
+    private void usesCouchDbDatabase(CouchDbTestDatabase database) {}
 
     @SuppressWarnings("unused")
-    private void usesString(String value) {
-    }
+    private void usesString(String value) {}
 }

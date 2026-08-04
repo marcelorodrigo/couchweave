@@ -7,12 +7,7 @@ import java.util.Objects;
  * Connection details for the database isolated for one CouchDB integration-test class.
  */
 public record CouchDbTestDatabase(
-    URI serverUri,
-    URI databaseUri,
-    String databaseName,
-    String username,
-    String password
-) {
+        URI serverUri, URI databaseUri, String databaseName, String username, String password) {
 
     public CouchDbTestDatabase {
         validateUri(serverUri, "server URI");

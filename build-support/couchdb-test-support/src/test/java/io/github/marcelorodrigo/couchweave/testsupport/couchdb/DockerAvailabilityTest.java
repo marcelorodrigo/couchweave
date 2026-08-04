@@ -1,10 +1,10 @@
 package io.github.marcelorodrigo.couchweave.testsupport.couchdb;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.opentest4j.TestAbortedException;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 class DockerAvailabilityTest {
 
@@ -18,9 +18,7 @@ class DockerAvailabilityTest {
         var failure = DockerAvailability.startupFailure(cause, false);
 
         // then
-        assertThat(failure)
-            .isInstanceOf(TestAbortedException.class)
-            .hasMessageContaining("Docker is unavailable");
+        assertThat(failure).isInstanceOf(TestAbortedException.class).hasMessageContaining("Docker is unavailable");
     }
 
     @Test
@@ -34,8 +32,8 @@ class DockerAvailabilityTest {
 
         // then
         assertThat(failure)
-            .isInstanceOf(CouchDbTestHarnessException.class)
-            .hasMessageContaining("Docker is unavailable");
+                .isInstanceOf(CouchDbTestHarnessException.class)
+                .hasMessageContaining("Docker is unavailable");
     }
 
     @Test
@@ -49,7 +47,7 @@ class DockerAvailabilityTest {
 
         // then
         assertThat(failure)
-            .isInstanceOf(CouchDbTestHarnessException.class)
-            .hasMessage("Unable to start the CouchDB test container");
+                .isInstanceOf(CouchDbTestHarnessException.class)
+                .hasMessage("Unable to start the CouchDB test container");
     }
 }

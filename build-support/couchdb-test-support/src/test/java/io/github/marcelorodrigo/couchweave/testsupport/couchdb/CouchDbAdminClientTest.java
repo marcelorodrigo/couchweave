@@ -1,13 +1,12 @@
 package io.github.marcelorodrigo.couchweave.testsupport.couchdb;
 
-import java.net.URI;
-import java.net.http.HttpRequest;
-
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import java.net.URI;
+import java.net.http.HttpRequest;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 class CouchDbAdminClientTest {
 
@@ -25,7 +24,7 @@ class CouchDbAdminClientTest {
         assertThat(transport.request.method()).isEqualTo("GET");
         assertThat(transport.request.uri()).hasPath("/_up");
         assertThat(transport.request.headers().firstValue("Authorization"))
-            .hasValueSatisfying(value -> assertThat(value).startsWith("Basic "));
+                .hasValueSatisfying(value -> assertThat(value).startsWith("Basic "));
     }
 
     @Test
@@ -66,9 +65,9 @@ class CouchDbAdminClientTest {
 
         // when / then
         assertThatThrownBy(() -> client.createDatabase("couchweave_test_database"))
-            .isInstanceOf(CouchDbTestHarnessException.class)
-            .hasMessageContaining("HTTP 401")
-            .hasMessageNotContaining("secret");
+                .isInstanceOf(CouchDbTestHarnessException.class)
+                .hasMessageContaining("HTTP 401")
+                .hasMessageNotContaining("secret");
     }
 
     private CouchDbAdminClient client(CouchDbHttpTransport transport) {

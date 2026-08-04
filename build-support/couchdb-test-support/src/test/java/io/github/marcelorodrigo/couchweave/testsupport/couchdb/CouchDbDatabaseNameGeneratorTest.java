@@ -1,11 +1,10 @@
 package io.github.marcelorodrigo.couchweave.testsupport.couchdb;
 
-import java.util.stream.IntStream;
+import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.stream.IntStream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 class CouchDbDatabaseNameGeneratorTest {
 
@@ -19,14 +18,14 @@ class CouchDbDatabaseNameGeneratorTest {
 
         // when
         var names = IntStream.range(0, numberOfNames)
-            .parallel()
-            .mapToObj(ignored -> databaseNameGenerator.next())
-            .toList();
+                .parallel()
+                .mapToObj(ignored -> databaseNameGenerator.next())
+                .toList();
 
         // then
         assertThat(names)
-            .hasSize(numberOfNames)
-            .doesNotHaveDuplicates()
-            .allMatch(name -> name.matches("couchweave_test_[a-f0-9]{32}"));
+                .hasSize(numberOfNames)
+                .doesNotHaveDuplicates()
+                .allMatch(name -> name.matches("couchweave_test_[a-f0-9]{32}"));
     }
 }

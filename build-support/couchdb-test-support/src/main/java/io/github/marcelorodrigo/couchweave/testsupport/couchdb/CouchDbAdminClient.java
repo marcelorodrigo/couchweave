@@ -26,9 +26,9 @@ class CouchDbAdminClient {
     }
 
     void assertHealthy() {
-        var response = send("check CouchDB readiness", HttpRequest.newBuilder(endpoint("/_up"))
-            .GET()
-            .build());
+        var response = send(
+                "check CouchDB readiness",
+                HttpRequest.newBuilder(endpoint("/_up")).GET().build());
 
         if (response.statusCode() != 200 || !response.body().contains("\"status\":\"ok\"")) {
             throw unexpectedStatus("check CouchDB readiness", response);
@@ -37,9 +37,11 @@ class CouchDbAdminClient {
 
     CouchDbTestDatabase createDatabase(String databaseName) {
         var databaseUri = endpoint("/" + databaseName);
-        var response = send("create CouchDB database", HttpRequest.newBuilder(databaseUri)
-            .PUT(HttpRequest.BodyPublishers.noBody())
-            .build());
+        var response = send(
+                "create CouchDB database",
+                HttpRequest.newBuilder(databaseUri)
+                        .PUT(HttpRequest.BodyPublishers.noBody())
+                        .build());
 
         if (response.statusCode() != 201) {
             throw unexpectedStatus("create CouchDB database", response);
@@ -49,9 +51,9 @@ class CouchDbAdminClient {
     }
 
     boolean databaseExists(String databaseName) {
-        var response = send("check CouchDB database", HttpRequest.newBuilder(endpoint("/" + databaseName))
-            .GET()
-            .build());
+        var response = send(
+                "check CouchDB database",
+                HttpRequest.newBuilder(endpoint("/" + databaseName)).GET().build());
 
         if (response.statusCode() == 200) {
             return true;
@@ -63,9 +65,9 @@ class CouchDbAdminClient {
     }
 
     void deleteDatabase(String databaseName) {
-        var response = send("delete CouchDB database", HttpRequest.newBuilder(endpoint("/" + databaseName))
-            .DELETE()
-            .build());
+        var response = send(
+                "delete CouchDB database",
+                HttpRequest.newBuilder(endpoint("/" + databaseName)).DELETE().build());
 
         if (!SUCCESSFUL_DELETION_STATUSES.contains(response.statusCode())) {
             throw unexpectedStatus("delete CouchDB database", response);
@@ -74,10 +76,10 @@ class CouchDbAdminClient {
 
     private CouchDbHttpResponse send(String operation, HttpRequest request) {
         var authenticatedRequest = HttpRequest.newBuilder(request.uri())
-            .timeout(REQUEST_TIMEOUT)
-            .header("Authorization", authorizationHeader())
-            .method(request.method(), request.bodyPublisher().orElse(HttpRequest.BodyPublishers.noBody()))
-            .build();
+                .timeout(REQUEST_TIMEOUT)
+                .header("Authorization", authorizationHeader())
+                .method(request.method(), request.bodyPublisher().orElse(HttpRequest.BodyPublishers.noBody()))
+                .build();
         try {
             return httpTransport.send(authenticatedRequest);
         } catch (InterruptedException exception) {
@@ -98,13 +100,7 @@ class CouchDbAdminClient {
     }
 
     private CouchDbTestHarnessException unexpectedStatus(String operation, CouchDbHttpResponse response) {
-        return new CouchDbTestHarnessException(
-            "Unable to %s at %s: received HTTP %d with response %s".formatted(
-                operation,
-                response.uri(),
-                response.statusCode(),
-                response.body()
-            )
-        );
+        return new CouchDbTestHarnessException("Unable to %s at %s: received HTTP %d with response %s"
+                .formatted(operation, response.uri(), response.statusCode(), response.body()));
     }
 }

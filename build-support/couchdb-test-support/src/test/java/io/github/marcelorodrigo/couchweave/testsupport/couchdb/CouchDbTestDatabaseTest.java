@@ -1,12 +1,11 @@
 package io.github.marcelorodrigo.couchweave.testsupport.couchdb;
 
-import java.net.URI;
-
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+
+import java.net.URI;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 class CouchDbTestDatabaseTest {
 
@@ -33,8 +32,9 @@ class CouchDbTestDatabaseTest {
 
         // when / then
         assertThatIllegalArgumentException()
-            .isThrownBy(() -> new CouchDbTestDatabase(serverUri, databaseUri, "couchweave_test_database", "admin", "secret"))
-            .withMessage("server URI must be an absolute HTTP URI");
+                .isThrownBy(() ->
+                        new CouchDbTestDatabase(serverUri, databaseUri, "couchweave_test_database", "admin", "secret"))
+                .withMessage("server URI must be an absolute HTTP URI");
     }
 
     @Test
@@ -46,7 +46,7 @@ class CouchDbTestDatabaseTest {
 
         // when / then
         assertThatIllegalArgumentException()
-            .isThrownBy(() -> new CouchDbTestDatabase(serverUri, databaseUri, " ", "admin", "secret"))
-            .withMessage("database name must not be blank");
+                .isThrownBy(() -> new CouchDbTestDatabase(serverUri, databaseUri, " ", "admin", "secret"))
+                .withMessage("database name must not be blank");
     }
 }

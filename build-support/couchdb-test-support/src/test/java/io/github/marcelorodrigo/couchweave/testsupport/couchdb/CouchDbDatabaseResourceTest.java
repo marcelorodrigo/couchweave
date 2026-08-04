@@ -1,10 +1,10 @@
 package io.github.marcelorodrigo.couchweave.testsupport.couchdb;
 
-import java.net.URI;
+import static org.assertj.core.api.Assertions.assertThat;
 
+import java.net.URI;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import static org.assertj.core.api.Assertions.assertThat;
 
 class CouchDbDatabaseResourceTest {
 
@@ -14,12 +14,11 @@ class CouchDbDatabaseResourceTest {
         // given
         var adminClient = new RecordingAdminClient();
         var database = new CouchDbTestDatabase(
-            URI.create("http://localhost:49152"),
-            URI.create("http://localhost:49152/couchweave_test_database"),
-            "couchweave_test_database",
-            "admin",
-            "secret"
-        );
+                URI.create("http://localhost:49152"),
+                URI.create("http://localhost:49152/couchweave_test_database"),
+                "couchweave_test_database",
+                "admin",
+                "secret");
         var resource = new CouchDbDatabaseResource(database, adminClient);
 
         // when
@@ -37,8 +36,11 @@ class CouchDbDatabaseResourceTest {
         private int deleteCalls;
 
         private RecordingAdminClient() {
-            super(request -> new CouchDbHttpResponse(request.uri(), 200, "{\"ok\":true}"),
-                URI.create("http://localhost:49152"), "admin", "secret");
+            super(
+                    request -> new CouchDbHttpResponse(request.uri(), 200, "{\"ok\":true}"),
+                    URI.create("http://localhost:49152"),
+                    "admin",
+                    "secret");
         }
 
         @Override

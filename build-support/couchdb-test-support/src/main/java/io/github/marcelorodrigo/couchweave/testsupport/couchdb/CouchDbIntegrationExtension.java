@@ -1,7 +1,6 @@
 package io.github.marcelorodrigo.couchweave.testsupport.couchdb;
 
 import java.net.http.HttpClient;
-
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -11,13 +10,12 @@ import org.junit.jupiter.api.extension.ParameterResolver;
 /**
  * JUnit extension backing {@link CouchDbIntegrationTest}.
  */
-public final class CouchDbIntegrationExtension
-    implements BeforeAllCallback, AfterAllCallback, ParameterResolver {
+public final class CouchDbIntegrationExtension implements BeforeAllCallback, AfterAllCallback, ParameterResolver {
 
     private static final Object CONTAINER_KEY = CouchDbContainerResource.class;
     private static final Object DATABASE_KEY = CouchDbDatabaseResource.class;
     private static final ExtensionContext.Namespace ROOT_NAMESPACE =
-        ExtensionContext.Namespace.create(CouchDbIntegrationExtension.class, "container");
+            ExtensionContext.Namespace.create(CouchDbIntegrationExtension.class, "container");
 
     private final CouchDbContainerFactory containerFactory;
     private final CouchDbAdminClientFactory adminClientFactory;
@@ -25,22 +23,16 @@ public final class CouchDbIntegrationExtension
 
     public CouchDbIntegrationExtension() {
         this(
-            CouchDbContainerResource::start,
-            (serverUri, username, password) -> new CouchDbAdminClient(
-                new JdkCouchDbHttpTransport(HttpClient.newHttpClient()),
-                serverUri,
-                username,
-                password
-            ),
-            new CouchDbDatabaseNameGenerator()
-        );
+                CouchDbContainerResource::start,
+                (serverUri, username, password) -> new CouchDbAdminClient(
+                        new JdkCouchDbHttpTransport(HttpClient.newHttpClient()), serverUri, username, password),
+                new CouchDbDatabaseNameGenerator());
     }
 
     CouchDbIntegrationExtension(
-        CouchDbContainerFactory containerFactory,
-        CouchDbAdminClientFactory adminClientFactory,
-        CouchDbDatabaseNameGenerator databaseNameGenerator
-    ) {
+            CouchDbContainerFactory containerFactory,
+            CouchDbAdminClientFactory adminClientFactory,
+            CouchDbDatabaseNameGenerator databaseNameGenerator) {
         this.containerFactory = containerFactory;
         this.adminClientFactory = adminClientFactory;
         this.databaseNameGenerator = databaseNameGenerator;
@@ -70,19 +62,14 @@ public final class CouchDbIntegrationExtension
     }
 
     private CouchDbDatabaseResource databaseResource(ExtensionContext context) {
-        return classStore(context).getOrComputeIfAbsent(
-            DATABASE_KEY,
-            ignored -> createDatabase(context),
-            CouchDbDatabaseResource.class
-        );
+        return classStore(context)
+                .getOrComputeIfAbsent(DATABASE_KEY, ignored -> createDatabase(context), CouchDbDatabaseResource.class);
     }
 
     private CouchDbDatabaseResource createDatabase(ExtensionContext context) {
-        var container = rootStore(context).getOrComputeIfAbsent(
-            CONTAINER_KEY,
-            ignored -> containerFactory.start(),
-            CouchDbContainerResource.class
-        );
+        var container = rootStore(context)
+                .getOrComputeIfAbsent(
+                        CONTAINER_KEY, ignored -> containerFactory.start(), CouchDbContainerResource.class);
         var adminClient = adminClientFactory.create(container.serverUri(), container.username(), container.password());
         adminClient.assertHealthy();
         var database = adminClient.createDatabase(databaseNameGenerator.next());
@@ -94,10 +81,8 @@ public final class CouchDbIntegrationExtension
     }
 
     private ExtensionContext.Store classStore(ExtensionContext context) {
-        return context.getStore(ExtensionContext.Namespace.create(
-            CouchDbIntegrationExtension.class,
-            context.getRequiredTestClass()
-        ));
+        return context.getStore(
+                ExtensionContext.Namespace.create(CouchDbIntegrationExtension.class, context.getRequiredTestClass()));
     }
 
     @FunctionalInterface
