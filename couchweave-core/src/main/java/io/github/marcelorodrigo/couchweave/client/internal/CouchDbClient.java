@@ -6,4 +6,6 @@ import org.springframework.http.HttpMethod;
 interface CouchDbClient {
 
     CouchDbResponse exchange(HttpMethod method, List<String> pathSegments, String body);
+
+    CouchDbResponse exchange(HttpMethod method, List<String> pathSegments, String body, CouchDbRequestContext context);
 }

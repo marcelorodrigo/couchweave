@@ -40,6 +40,9 @@
         <maven-surefire-plugin.version>3.5.6</maven-surefire-plugin.version>
         <maven.deploy.skip>true</maven.deploy.skip>
         <mockito.version>5.23.0</mockito.version>
+        <sonar-maven-plugin.version>5.7.0.6970</sonar-maven-plugin.version>
+        <sonar.organization>marcelorodrigo</sonar.organization>
+        <sonar.coverage.jacoco.xmlReportPaths>${maven.multiModuleProjectDirectory}/build-support/coverage/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
 
     <dependencyManagement>
@@ -232,6 +235,11 @@
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.sonarsource.scanner.maven</groupId>
+                <artifactId>sonar-maven-plugin</artifactId>
+                <version>${sonar-maven-plugin.version}</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
