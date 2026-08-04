@@ -6,13 +6,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.web.util.UriUtils;
 
 /** Encodes CouchDB path and query components against the configured server URI. */
 final class CouchDbUriBuilder {
-
-    /** Delimiter used when joining encoded path segments. */
-    private static final String PATH_DELIMITER = "/";
 
     /** Server URI without a trailing slash, suitable for appending request paths. */
     private final String baseUri;
@@ -49,18 +47,15 @@ final class CouchDbUriBuilder {
         Objects.requireNonNull(pathSegments, "pathSegments must not be null");
         Objects.requireNonNull(queryParameters, "queryParameters must not be null");
 
-        var encodedPath = pathSegments.stream()
+        var uriBuilder = UriComponentsBuilder.fromUri(URI.create(baseUri));
+        pathSegments.stream()
                 .map(segment -> UriUtils.encodePathSegment(
                         Objects.requireNonNull(segment, "path segment must not be null"), StandardCharsets.UTF_8))
-                .reduce((left, right) -> left + PATH_DELIMITER + right)
-                .map(path -> PATH_DELIMITER + path)
-                .orElse("");
-        var encodedQuery = queryParameters.entrySet().stream()
+                .forEach(uriBuilder::pathSegment);
+        queryParameters.entrySet().stream()
                 .map(entry -> encodeQueryParameter(entry.getKey(), entry.getValue()))
-                .reduce((left, right) -> left + "&" + right)
-                .map(query -> "?" + query)
-                .orElse("");
-        return URI.create(baseUri + encodedPath + encodedQuery);
+                .forEach(uriBuilder::query);
+        return uriBuilder.build(true).toUri();
     }
 
     /**
