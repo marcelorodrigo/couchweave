@@ -5,7 +5,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
+import io.github.marcelorodrigo.couchweave.client.CouchDbAuthenticationException;
 import io.github.marcelorodrigo.couchweave.client.CouchDbClientSettings;
+import io.github.marcelorodrigo.couchweave.client.CouchDbNotFoundException;
+import io.github.marcelorodrigo.couchweave.client.CouchDbResponseException;
+import io.github.marcelorodrigo.couchweave.client.CouchOptimisticLockingFailureException;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
@@ -16,9 +20,17 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.dao.InvalidDataAccessResourceUsageException;
+import org.springframework.dao.PermissionDeniedDataAccessException;
 import org.springframework.http.HttpMethod;
 import org.springframework.web.client.ResourceAccessException;
 
@@ -110,8 +122,63 @@ class RestClientCouchDbClientTest {
 
         // when / then
         assertThatThrownBy(() -> client.exchange(HttpMethod.GET, List.of("books"), null))
-                .isInstanceOf(ResourceAccessException.class)
+                .isInstanceOf(DataAccessResourceFailureException.class)
                 .hasMessageNotContaining("secret");
+    }
+
+    @Test
+    @DisplayName("should translate a connection failure and preserve its transport cause")
+    void shouldTranslateAConnectionFailureAndPreserveItsTransportCause() throws IOException {
+        // given
+        startServer(exchange -> respond(exchange, 200, "{\"ok\":true}"));
+        var unavailablePort = server.getAddress().getPort();
+        server.stop(0);
+        server = null;
+        var settings = new CouchDbClientSettings(
+                URI.create("http://localhost:" + unavailablePort),
+                "books",
+                "admin",
+                "secret",
+                Duration.ofSeconds(1),
+                Duration.ofSeconds(1));
+        var client = new RestClientCouchDbClient(settings);
+
+        // when / then
+        assertThatThrownBy(() -> client.exchange(HttpMethod.GET, List.of("books"), null))
+                .isInstanceOf(DataAccessResourceFailureException.class)
+                .hasCauseInstanceOf(ResourceAccessException.class)
+                .hasMessageNotContaining("secret");
+    }
+
+    @ParameterizedTest
+    @MethodSource("statusTranslations")
+    @DisplayName("should translate HTTP failures through the transport boundary")
+    void shouldTranslateHttpFailuresThroughTheTransportBoundary(
+            int statusCode, Class<? extends DataAccessException> expectedType) throws IOException {
+        // given
+        startServer(exchange -> respond(
+                exchange, statusCode, "{\"error\":\"request_failed\",\"reason\":\"CouchDB rejected the request\"}"));
+        var client = client("", null, null, Duration.ofSeconds(1));
+        var context = CouchDbRequestContext.forDocument("books", "book-42", "3-stale");
+
+        // when / then
+        assertThatThrownBy(() -> client.exchange(HttpMethod.PUT, List.of("books", "book-42"), "{}", context))
+                .isInstanceOf(expectedType)
+                .hasMessageContaining("book-42");
+    }
+
+    @Test
+    @DisplayName("should translate malformed CouchDB error responses through the transport boundary")
+    void shouldTranslateMalformedCouchDbErrorResponsesThroughTheTransportBoundary() throws IOException {
+        // given
+        startServer(exchange -> respond(exchange, 502, "not-json"));
+        var client = client("", null, null, Duration.ofSeconds(1));
+
+        // when / then
+        assertThatThrownBy(() -> client.exchange(HttpMethod.GET, List.of("books"), null))
+                .isInstanceOf(CouchDbResponseException.class)
+                .hasMessageContaining("unreadable error response")
+                .hasMessageNotContaining("not-json");
     }
 
     @Test
@@ -168,6 +235,16 @@ class RestClientCouchDbClientTest {
         exchange.sendResponseHeaders(statusCode, bytes.length);
         exchange.getResponseBody().write(bytes);
         exchange.close();
+    }
+
+    private static Stream<Arguments> statusTranslations() {
+        return Stream.of(
+                Arguments.of(400, InvalidDataAccessResourceUsageException.class),
+                Arguments.of(401, CouchDbAuthenticationException.class),
+                Arguments.of(403, PermissionDeniedDataAccessException.class),
+                Arguments.of(404, CouchDbNotFoundException.class),
+                Arguments.of(409, CouchOptimisticLockingFailureException.class),
+                Arguments.of(500, CouchDbResponseException.class));
     }
 
     @FunctionalInterface
