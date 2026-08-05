@@ -7,7 +7,6 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
 
@@ -19,8 +18,7 @@ class CouchWeaveCustomConversionsTest {
         // given
         var conversions =
                 new CouchWeaveCustomConversions(List.of(CodeWriteConverter.INSTANCE, CodeReadConverter.INSTANCE));
-        var conversionService = new DefaultConversionService();
-        conversions.registerConvertersIn(conversionService);
+        var conversionService = conversions.getConversionService();
 
         // when
         var stored = conversionService.convert(new Code("ABC-123"), String.class);
@@ -35,8 +33,7 @@ class CouchWeaveCustomConversionsTest {
         // given
         var conversions =
                 new CouchWeaveCustomConversions(List.of(CodeWriteConverter.INSTANCE, CodeReadConverter.INSTANCE));
-        var conversionService = new DefaultConversionService();
-        conversions.registerConvertersIn(conversionService);
+        var conversionService = conversions.getConversionService();
 
         // when
         var restored = conversionService.convert("ABC-123", Code.class);
