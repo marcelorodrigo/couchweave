@@ -7,8 +7,9 @@ Visit [couchweave.marcelorodrigo.com](https://couchweave.marcelorodrigo.com/)
 for the project overview, roadmap, design rationale, and documentation status.
 
 > [!IMPORTANT]
-> CouchWeave is in its initial design phase. It does not yet publish usable
-> artifacts or provide a working CouchDB integration.
+> CouchWeave is in active development. The core module now provides mapped,
+> synchronous CouchDB document operations; repository and Spring Boot support
+> remain under development.
 
 ## Vision
 
@@ -28,10 +29,12 @@ solves, and the integration work that remains. The comparison is intended to
 recognize prior work and make CouchWeave's scope explicit, not to rank or
 criticize other projects.
 
-The planned capabilities include:
+The current and planned capabilities include:
 
-- CRUD repositories for CouchDB documents
+- Mapped synchronous CRUD operations for CouchDB documents
 - Object mapping for Java types, document IDs, and document revisions
+- Boot-independent manual construction through `CouchWeaveTemplate`
+- CRUD repositories for CouchDB documents (planned)
 - Derived repository queries translated to CouchDB Mango selectors
 - Pagination and sorting where CouchDB can support them predictably
 - Optimistic-locking semantics based on CouchDB revisions
@@ -61,10 +64,31 @@ The Maven reactor currently contains:
 
 ## Project status
 
-The repository contains the initial multi-module project skeleton at version
-`0.0.1-SNAPSHOT`. The build produces the core, Spring Boot integration, and
-starter artifacts, but these modules do not yet provide CouchDB behavior or a
-public Java API.
+The repository contains the initial multi-module project at version
+`0.0.1-SNAPSHOT`. The core artifact provides the framework-independent mapping
+and operations API; Spring Boot integration, repositories, queries, and richer
+optimistic-locking behavior are still being developed.
+
+## Boot-independent operations
+
+Applications can use the core API without a Spring Boot context by creating a
+mapping context, converter, and template explicitly:
+
+```java
+var context = new CouchMappingContext("my_database");
+context.setInitialEntitySet(Set.of(MyDocument.class));
+context.initialize();
+var converter = new MappingCouchWeaveConverter(
+        context, new ObjectMapper(), new CouchWeaveCustomConversions(List.of()));
+var settings = new CouchDbClientSettings(URI.create("http://localhost:5984"), "my_database");
+var operations = new CouchWeaveTemplate(settings, converter);
+var saved = operations.save(document);
+```
+
+`@CouchDocument(database = "...")` routes an entity to a database other than
+the mapping context default. Saved entities are reconstructed with CouchDB's
+returned identifier and revision, which supports immutable records and
+generated identifiers.
 
 The [compatibility policy](docs/compatibility.md) records the initial Java,
 Spring Data, Spring Boot, and CouchDB version contract. The

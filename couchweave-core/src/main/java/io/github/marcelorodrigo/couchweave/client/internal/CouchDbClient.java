@@ -1,10 +1,26 @@
 package io.github.marcelorodrigo.couchweave.client.internal;
 
+import io.github.marcelorodrigo.couchweave.client.CouchDbClientSettings;
 import java.util.Optional;
 import tools.jackson.databind.JsonNode;
 
-/** Internal CRUD boundary implemented by the CouchDB HTTP client. */
-interface CouchDbClient {
+/**
+ * Java-public CRUD boundary implemented by the CouchDB HTTP client.
+ *
+ * <p>The type remains in the {@code internal} package because applications should normally use
+ * {@code CouchWeaveTemplate} instead of issuing raw CouchDB operations.
+ */
+public interface CouchDbClient {
+
+    /**
+     * Creates a client backed by the default synchronous HTTP implementation.
+     *
+     * @param settings validated CouchDB connection settings
+     * @return a reusable CouchDB client
+     */
+    static CouchDbClient create(CouchDbClientSettings settings) {
+        return new RestClientCouchDbClient(settings);
+    }
 
     /**
      * Creates or replaces a document.

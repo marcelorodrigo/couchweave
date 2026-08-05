@@ -89,7 +89,7 @@ public final class MappingCouchWeaveConverter implements CouchWeaveConverter {
         try {
             var instantiator = entityInstantiators.getInstantiatorFor(entity);
             instance = instantiator.createInstance(entity, new DocumentParameterValueProvider(entity, source));
-        } catch (MappingException exception) {
+        } catch (PropertyMappingException exception) {
             throw exception;
         } catch (RuntimeException exception) {
             throw new MappingException(
@@ -107,7 +107,7 @@ public final class MappingCouchWeaveConverter implements CouchWeaveConverter {
             }
             try {
                 accessor.setProperty(property, readProperty(property, source));
-            } catch (MappingException exception) {
+            } catch (PropertyMappingException exception) {
                 throw exception;
             } catch (RuntimeException exception) {
                 throw propertyException(entity.getType(), property, "read", exception);
@@ -162,9 +162,9 @@ public final class MappingCouchWeaveConverter implements CouchWeaveConverter {
         }
 
         try {
-            var probeType = getScalarType(value);
-            if (probeType != null && customConversions.hasCustomReadTarget(probeType, property.getType())) {
-                var nativeValue = objectMapper.treeToValue(value, probeType);
+            var nativeValue = objectMapper.treeToValue(value, Object.class);
+            if (nativeValue != null
+                    && customConversions.hasCustomReadTarget(nativeValue.getClass(), property.getType())) {
                 return conversionService.convert(nativeValue, property.getType());
             }
             return objectMapper.treeToValue(
@@ -190,22 +190,6 @@ public final class MappingCouchWeaveConverter implements CouchWeaveConverter {
         }
         var getter = property.getGetter();
         return getter == null ? property.getType() : getter.getGenericReturnType();
-    }
-
-    private Class<?> getScalarType(JsonNode value) {
-        if (value.isString()) {
-            return String.class;
-        }
-        if (value.isBoolean()) {
-            return Boolean.class;
-        }
-        if (value.isIntegralNumber()) {
-            return value.numberValue().getClass();
-        }
-        if (value.isFloatingPointNumber()) {
-            return value.numberValue().getClass();
-        }
-        return null;
     }
 
     private void validateDocument(CouchPersistentEntity<?> entity, JsonNode source) {
@@ -238,12 +222,19 @@ public final class MappingCouchWeaveConverter implements CouchWeaveConverter {
         }
     }
 
-    private MappingException propertyException(
+    private PropertyMappingException propertyException(
             Class<?> entityType, CouchPersistentProperty property, String operation, Throwable cause) {
-        return new MappingException(
+        return new PropertyMappingException(
                 "Could not %s type %s property '%s' from field '%s'"
                         .formatted(operation, entityType.getName(), property.getName(), property.getFieldName()),
                 cause);
+    }
+
+    private static final class PropertyMappingException extends MappingException {
+
+        private PropertyMappingException(String message, Throwable cause) {
+            super(message, cause);
+        }
     }
 
     private final class DocumentParameterValueProvider implements ParameterValueProvider<CouchPersistentProperty> {
