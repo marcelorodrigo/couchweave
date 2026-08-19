@@ -124,16 +124,36 @@ public final class CouchWeaveTemplate implements CouchWeaveOperations {
         }
     }
 
+    /**
+     * Resolves the mapped persistent entity metadata for a Java type.
+     *
+     * @param entityType mapped entity type
+     * @param <T> entity type
+     * @return the resolved persistent entity metadata
+     */
     @SuppressWarnings("unchecked")
     private <T> CouchPersistentEntity<T> getRequiredEntity(Class<T> entityType) {
         return (CouchPersistentEntity<T>) converter.getMappingContext().getRequiredPersistentEntity(entityType);
     }
 
+    /**
+     * Returns the concrete class of a saved or deleted entity instance.
+     *
+     * @param entity entity instance
+     * @param <T> entity type
+     * @return the entity class
+     */
     @SuppressWarnings("unchecked")
     private <T> Class<T> entityClass(T entity) {
         return (Class<T>) entity.getClass();
     }
 
+    /**
+     * Returns the revision property of the mapped entity, or {@code null} when the type is revisionless.
+     *
+     * @param entityMetadata mapped entity metadata
+     * @return the revision property, or {@code null} when none is declared
+     */
     private CouchPersistentProperty findRevisionProperty(CouchPersistentEntity<?> entityMetadata) {
         for (var property : entityMetadata) {
             if (property.isRevisionProperty()) {
@@ -172,10 +192,23 @@ public final class CouchWeaveTemplate implements CouchWeaveOperations {
         }
     }
 
+    /**
+     * Returns a nonblank textual property value, or {@code null} when the value is missing, blank, or not text.
+     *
+     * @param value raw property value read from the entity accessor
+     * @return the nonblank string value, or {@code null}
+     */
     private static String mappedText(Object value) {
         return value instanceof String text && !text.isBlank() ? text : null;
     }
 
+    /**
+     * Returns a nonblank textual field from a CouchDB document, failing when the field is absent or invalid.
+     *
+     * @param document CouchDB document tree
+     * @param fieldName required textual field name
+     * @return the nonblank string value
+     */
     private static String requiredText(JsonNode document, String fieldName) {
         var value = document.get(fieldName);
         if (value == null || !value.isString() || value.stringValue().isBlank()) {
@@ -184,6 +217,11 @@ public final class CouchWeaveTemplate implements CouchWeaveOperations {
         return value.stringValue();
     }
 
+    /**
+     * Rejects blank document identifiers used as operation inputs.
+     *
+     * @param id supplied identifier
+     */
     private static void requireId(String id) {
         if (id == null || id.isBlank()) {
             throw new IllegalArgumentException("id must not be blank");
