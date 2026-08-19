@@ -1,6 +1,7 @@
 package io.github.marcelorodrigo.couchweave;
 
 import io.github.marcelorodrigo.couchweave.client.CouchDbClientSettings;
+import io.github.marcelorodrigo.couchweave.client.CouchOptimisticLockingFailureException;
 import io.github.marcelorodrigo.couchweave.client.internal.CouchDbClient;
 import io.github.marcelorodrigo.couchweave.mapping.CouchPersistentEntity;
 import io.github.marcelorodrigo.couchweave.mapping.CouchPersistentProperty;
@@ -52,12 +53,22 @@ public final class CouchWeaveTemplate implements CouchWeaveOperations {
     public <T> T save(T entity) {
         Objects.requireNonNull(entity, "entity must not be null");
         var entityMetadata = getRequiredEntity(entity.getClass());
+        var accessor = entityMetadata.getPropertyAccessor(entity);
+        var idProperty = entityMetadata.getRequiredIdProperty();
+        var id = mappedText(accessor.getProperty(idProperty));
+        var revisionProperty = findRevisionProperty(entityMetadata);
+        var revision = revisionProperty == null ? null : mappedText(accessor.getProperty(revisionProperty));
+        verifySaveLifecycle(entityMetadata, id, revision);
         var document = converter.write(entity);
         var documentId = requiredText(document, ID_FIELD);
-        var result = client.putDocument(entityMetadata.getDatabase(), documentId, document);
-        document.put(ID_FIELD, result.documentId());
-        document.put(REVISION_FIELD, result.revision());
-        return converter.read(entityClass(entity), document);
+        try {
+            var result = client.putDocument(entityMetadata.getDatabase(), documentId, document);
+            document.put(ID_FIELD, result.documentId());
+            document.put(REVISION_FIELD, result.revision());
+            return converter.read(entityClass(entity), document);
+        } catch (CouchOptimisticLockingFailureException exception) {
+            throw exception.withEntityType(entity.getClass());
+        }
     }
 
     @Override
@@ -89,7 +100,11 @@ public final class CouchWeaveTemplate implements CouchWeaveOperations {
             throw new InvalidDataAccessApiUsageException(
                     "Deleting a CouchWeave entity requires a mapped nonblank ID and revision");
         }
-        client.deleteDocument(entityMetadata.getDatabase(), id, revision);
+        try {
+            client.deleteDocument(entityMetadata.getDatabase(), id, revision);
+        } catch (CouchOptimisticLockingFailureException exception) {
+            throw exception.withEntityType(entity.getClass());
+        }
     }
 
     @Override
@@ -102,7 +117,11 @@ public final class CouchWeaveTemplate implements CouchWeaveOperations {
             return;
         }
         var revision = requiredText(document.get(), REVISION_FIELD);
-        client.deleteDocument(entityMetadata.getDatabase(), id, revision);
+        try {
+            client.deleteDocument(entityMetadata.getDatabase(), id, revision);
+        } catch (CouchOptimisticLockingFailureException exception) {
+            throw exception.withEntityType(entityType);
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -122,6 +141,35 @@ public final class CouchWeaveTemplate implements CouchWeaveOperations {
             }
         }
         return null;
+    }
+
+    /**
+     * Validates whether a save may proceed, enforcing revision semantics before any document write.
+     *
+     * <p>A {@code null} identifier means a generated-identifier create. A nonblank identifier with a
+     * nonblank revision means a conditional update. A nonblank identifier without a revision requires a
+     * prior existence probe: the save proceeds only when the document does not yet exist. A revision
+     * without a usable identifier is rejected.
+     *
+     * @param entityMetadata mapped entity metadata
+     * @param id nonblank mapped identifier, or {@code null} for a generated identifier
+     * @param revision nonblank mapped revision, or {@code null} when the caller has no snapshot
+     */
+    private void verifySaveLifecycle(CouchPersistentEntity<?> entityMetadata, String id, String revision) {
+        if (id == null) {
+            if (revision != null) {
+                throw new InvalidDataAccessApiUsageException(
+                        "Saving a CouchWeave entity with a revision requires a mapped nonblank ID");
+            }
+            return;
+        }
+        if (revision != null) {
+            return;
+        }
+        if (client.getDocument(entityMetadata.getDatabase(), id).isPresent()) {
+            throw new InvalidDataAccessApiUsageException(
+                    "Saving an existing CouchWeave entity requires a mapped nonblank revision");
+        }
     }
 
     private static String mappedText(Object value) {

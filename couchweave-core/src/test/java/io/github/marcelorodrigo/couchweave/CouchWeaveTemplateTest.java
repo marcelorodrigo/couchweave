@@ -5,9 +5,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import io.github.marcelorodrigo.couchweave.client.CouchOptimisticLockingFailureException;
 import io.github.marcelorodrigo.couchweave.client.internal.CouchDbClient;
 import io.github.marcelorodrigo.couchweave.client.internal.CouchDbWriteResult;
 import io.github.marcelorodrigo.couchweave.mapping.CouchDocument;
@@ -235,6 +237,111 @@ class CouchWeaveTemplateTest {
         assertThatThrownBy(() -> template.findById(" ", Book.class))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("id");
+    }
+
+    @Test
+    @DisplayName("should create an assigned-identifier document when it does not yet exist")
+    void shouldCreateAnAssignedIdentifierDocumentWhenItDoesNotExist() {
+        // given
+        var source = new Book("book-new", null, "CouchWeave");
+        var document = document("book-new", null);
+        var saved = new Book("book-new", "1-created", "CouchWeave");
+        when(client.getDocument("archive", "book-new")).thenReturn(Optional.empty());
+        when(converter.write(source)).thenReturn(document);
+        when(client.putDocument("archive", "book-new", document))
+                .thenReturn(new CouchDbWriteResult("book-new", "1-created"));
+        when(converter.read(Book.class, document)).thenReturn(saved);
+
+        // when
+        var result = template.save(source);
+
+        // then
+        assertThat(result).isEqualTo(saved);
+        verify(client).getDocument("archive", "book-new");
+    }
+
+    @Test
+    @DisplayName("should reject saving an existing document without a revision")
+    void shouldRejectSavingAnExistingDocumentWithoutARevision() {
+        // given
+        var source = new Book("book-exists", null, "CouchWeave");
+        when(client.getDocument("archive", "book-exists"))
+                .thenReturn(Optional.of(document("book-exists", "1-current")));
+
+        // when / then
+        assertThatThrownBy(() -> template.save(source))
+                .isInstanceOf(InvalidDataAccessApiUsageException.class)
+                .hasMessageContaining("revision");
+        verify(client, never()).putDocument(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("should reject saving a revisionless type that already exists")
+    void shouldRejectSavingARevisionlessTypeThatAlreadyExists() {
+        // given
+        var source = new NoRevisionBook("book-exists", "CouchWeave");
+        when(client.getDocument("default-db", "book-exists"))
+                .thenReturn(Optional.of(document("book-exists", "1-current")));
+
+        // when / then
+        assertThatThrownBy(() -> template.save(source))
+                .isInstanceOf(InvalidDataAccessApiUsageException.class)
+                .hasMessageContaining("revision");
+        verify(client, never()).putDocument(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("should reject saving a revision without a usable identifier")
+    void shouldRejectSavingARevisionWithoutAUsableIdentifier() {
+        // given
+        var source = new Book(null, "2-current", "CouchWeave");
+
+        // when / then
+        assertThatThrownBy(() -> template.save(source))
+                .isInstanceOf(InvalidDataAccessApiUsageException.class)
+                .hasMessageContaining("ID");
+        verify(client, never()).getDocument(any(), any());
+        verify(client, never()).putDocument(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("should expose the entity type on a stale save conflict")
+    void shouldExposeTheEntityTypeOnAStaleSaveConflict() {
+        // given
+        var source = new Book("book-1", "2-current", "CouchWeave");
+        var document = document("book-1", "2-current");
+        var conflict = new CouchOptimisticLockingFailureException("conflict", "archive", "book-1", "2-current", null);
+        when(converter.write(source)).thenReturn(document);
+        when(client.putDocument("archive", "book-1", document)).thenThrow(conflict);
+
+        // when / then
+        assertThatThrownBy(() -> template.save(source))
+                .isInstanceOfSatisfying(CouchOptimisticLockingFailureException.class, failure -> {
+                    assertThat(failure.entityType()).isEqualTo(Book.class);
+                    assertThat(failure.database()).isEqualTo("archive");
+                    assertThat(failure.documentId()).isEqualTo("book-1");
+                    assertThat(failure.revision()).isEqualTo("2-current");
+                });
+        verify(client, times(1)).putDocument("archive", "book-1", document);
+    }
+
+    @Test
+    @DisplayName("should expose the entity type on a stale entity delete conflict")
+    void shouldExposeTheEntityTypeOnAStaleEntityDeleteConflict() {
+        // given
+        var entity = new Book("book-1", "2-current", "CouchWeave");
+        var conflict = new CouchOptimisticLockingFailureException("conflict", "archive", "book-1", "2-current", null);
+        when(client.deleteDocument("archive", "book-1", "2-current")).thenThrow(conflict);
+
+        // when / then
+        assertThatThrownBy(() -> template.delete(entity))
+                .isInstanceOfSatisfying(CouchOptimisticLockingFailureException.class, failure -> {
+                    assertThat(failure.entityType()).isEqualTo(Book.class);
+                    assertThat(failure.database()).isEqualTo("archive");
+                    assertThat(failure.documentId()).isEqualTo("book-1");
+                    assertThat(failure.revision()).isEqualTo("2-current");
+                });
+        verify(client, times(1)).deleteDocument("archive", "book-1", "2-current");
     }
 
     private ObjectNode document(String id, String revision) {

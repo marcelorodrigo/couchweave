@@ -1,8 +1,10 @@
 package io.github.marcelorodrigo.couchweave;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.github.marcelorodrigo.couchweave.client.CouchDbClientSettings;
+import io.github.marcelorodrigo.couchweave.client.CouchOptimisticLockingFailureException;
 import io.github.marcelorodrigo.couchweave.mapping.CouchDocument;
 import io.github.marcelorodrigo.couchweave.mapping.CouchMappingContext;
 import io.github.marcelorodrigo.couchweave.mapping.CouchWeaveCustomConversions;
@@ -122,6 +124,55 @@ class CouchWeaveTemplateIT {
         } finally {
             deleteDatabase(database, OVERRIDE_DATABASE);
         }
+    }
+
+    @Test
+    @DisplayName("should fail a stale save with an optimistic-locking conflict and leave the winning update intact")
+    void shouldFailAStaleSaveWithAnOptimisticLockingConflict(CouchDbTestDatabase database) {
+        // given
+        var template = template(database, MutableBook.class, ImmutableBook.class, OverrideBook.class);
+        var created = template.save(new MutableBook("stale-" + UUID.randomUUID(), null, "original"));
+        var winner = template.findById(created.id, MutableBook.class).orElseThrow();
+        var stale = template.findById(created.id, MutableBook.class).orElseThrow();
+
+        // when
+        winner.title = "updated";
+        template.save(winner);
+
+        // then
+        assertThatThrownBy(() -> template.save(stale))
+                .isInstanceOfSatisfying(CouchOptimisticLockingFailureException.class, failure -> {
+                    assertThat(failure.entityType()).isEqualTo(MutableBook.class);
+                    assertThat(failure.documentId()).isEqualTo(created.id);
+                    assertThat(failure.revision()).isEqualTo(stale.revision);
+                });
+        var reloaded = template.findById(created.id, MutableBook.class).orElseThrow();
+        assertThat(reloaded.title).isEqualTo("updated");
+    }
+
+    @Test
+    @DisplayName("should fail a stale entity delete with an optimistic-locking conflict and leave the document intact")
+    void shouldFailAStaleEntityDeleteWithAnOptimisticLockingConflict(CouchDbTestDatabase database) {
+        // given
+        var template = template(database, MutableBook.class, ImmutableBook.class, OverrideBook.class);
+        var created = template.save(new MutableBook("delete-" + UUID.randomUUID(), null, "original"));
+        var winner = template.findById(created.id, MutableBook.class).orElseThrow();
+        var stale = template.findById(created.id, MutableBook.class).orElseThrow();
+
+        // when
+        winner.title = "changed";
+        template.save(winner);
+
+        // then
+        assertThatThrownBy(() -> template.delete(stale))
+                .isInstanceOfSatisfying(CouchOptimisticLockingFailureException.class, failure -> {
+                    assertThat(failure.entityType()).isEqualTo(MutableBook.class);
+                    assertThat(failure.documentId()).isEqualTo(created.id);
+                    assertThat(failure.revision()).isEqualTo(stale.revision);
+                });
+        assertThat(template.existsById(created.id, MutableBook.class)).isTrue();
+        var reloaded = template.findById(created.id, MutableBook.class).orElseThrow();
+        assertThat(reloaded.title).isEqualTo("changed");
     }
 
     private CouchWeaveTemplate template(CouchDbTestDatabase database, Class<?>... entityTypes) {

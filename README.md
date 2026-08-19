@@ -66,8 +66,10 @@ The Maven reactor currently contains:
 
 The repository contains the initial multi-module project at version
 `0.0.1-SNAPSHOT`. The core artifact provides the framework-independent mapping
-and operations API; Spring Boot integration, repositories, queries, and richer
-optimistic-locking behavior are still being developed.
+and operations API; Spring Boot integration, repositories, and queries are still
+being developed. Saving an entity with a revision performs a revision-conditional
+update, and CouchDB conflicts surface as `CouchOptimisticLockingFailureException`
+carrying the entity type, document ID, and attempted revision.
 
 ## Boot-independent operations
 
