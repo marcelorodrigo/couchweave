@@ -258,6 +258,7 @@ class CouchWeaveTemplateTest {
         // then
         assertThat(result).isEqualTo(saved);
         verify(client).getDocument("archive", "book-new");
+        verify(client).putDocument("archive", "book-new", document);
     }
 
     @Test
