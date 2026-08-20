@@ -20,8 +20,10 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Base64;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
@@ -33,6 +35,17 @@ class CouchWeaveTemplateIT {
     private static final String OVERRIDE_DATABASE = "couchweave-template-override";
 
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @BeforeEach
+    void emptyDatabase(CouchDbTestDatabase database) {
+        var template = template(database, MutableBook.class, ImmutableBook.class);
+        for (var book : template.findAll(MutableBook.class)) {
+            template.delete(book);
+        }
+        for (var book : template.findAll(ImmutableBook.class)) {
+            template.delete(book);
+        }
+    }
 
     @Test
     @DisplayName("should round trip generated identifiers and revisions against CouchDB")
@@ -268,6 +281,19 @@ class CouchWeaveTemplateIT {
             this.id = id;
             this.revision = revision;
             this.title = title;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return other instanceof MutableBook book
+                    && Objects.equals(id, book.id)
+                    && Objects.equals(revision, book.revision)
+                    && Objects.equals(title, book.title);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(id, revision, title);
         }
     }
 

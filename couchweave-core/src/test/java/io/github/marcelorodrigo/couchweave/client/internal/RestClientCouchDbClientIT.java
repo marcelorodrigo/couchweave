@@ -8,6 +8,7 @@ import io.github.marcelorodrigo.couchweave.client.CouchOptimisticLockingFailureE
 import io.github.marcelorodrigo.couchweave.testsupport.couchdb.CouchDbIntegrationTest;
 import io.github.marcelorodrigo.couchweave.testsupport.couchdb.CouchDbTestDatabase;
 import java.time.Duration;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import tools.jackson.core.JacksonException;
@@ -17,6 +18,17 @@ import tools.jackson.databind.ObjectMapper;
 class RestClientCouchDbClientIT {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @BeforeEach
+    void emptyDatabase(CouchDbTestDatabase database) {
+        var client = client(database);
+        for (var document : client.getAllDocuments(database.databaseName())) {
+            client.deleteDocument(
+                    database.databaseName(),
+                    document.get("_id").stringValue(),
+                    document.get("_rev").stringValue());
+        }
+    }
 
     @Test
     @DisplayName("should complete the document CRUD lifecycle against CouchDB")
