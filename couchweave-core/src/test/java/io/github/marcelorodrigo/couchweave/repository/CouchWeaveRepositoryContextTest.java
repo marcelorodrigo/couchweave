@@ -63,11 +63,11 @@ class CouchWeaveRepositoryContextTest {
     void shouldFailStartupForNonStringIdRepository() {
         // given
         var operations = mock(CouchWeaveOperations.class);
-        var context = context(operations, LongIdRepository.class, RepositoryFragments.empty());
-        // when
-        // then
-        assertThatThrownBy(context::refresh).hasCauseInstanceOf(CouchWeaveRepositoryConfigurationException.class);
-        context.close();
+        try (var context = context(operations, LongIdRepository.class, RepositoryFragments.empty())) {
+            // when
+            // then
+            assertThatThrownBy(context::refresh).hasCauseInstanceOf(CouchWeaveRepositoryConfigurationException.class);
+        }
     }
 
     private static AnnotationConfigApplicationContext context(
