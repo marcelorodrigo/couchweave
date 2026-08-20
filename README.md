@@ -8,8 +8,8 @@ for the project overview, roadmap, design rationale, and documentation status.
 
 > [!IMPORTANT]
 > CouchWeave is in active development. The core module now provides mapped,
-> synchronous CouchDB document operations; repository and Spring Boot support
-> remain under development.
+> synchronous CouchDB document operations and synchronous CRUD repositories;
+> Spring Boot support remains under development.
 
 ## Vision
 
@@ -34,7 +34,7 @@ The current and planned capabilities include:
 - Mapped synchronous CRUD operations for CouchDB documents
 - Object mapping for Java types, document IDs, and document revisions
 - Boot-independent manual construction through `CouchWeaveTemplate`
-- CRUD repositories for CouchDB documents (planned)
+- CRUD repositories for CouchDB documents
 - Derived repository queries translated to CouchDB Mango selectors
 - Pagination and sorting where CouchDB can support them predictably
 - Optimistic-locking semantics based on CouchDB revisions
@@ -56,7 +56,7 @@ The Maven reactor currently contains:
 
 | Module | Responsibility |
 | --- | --- |
-| `couchweave-core` | CouchDB mapping, operations, repository implementation, and query support |
+| `couchweave-core` | CouchDB mapping, operations, CRUD repository implementation, and query support |
 | `couchweave-spring-boot` | Spring Boot auto-configuration |
 | `couchweave-spring-boot-starter` | Opinionated dependency entry point for Spring Boot applications |
 | `samples/couchweave-sample` | Non-publishable sample used to verify the complete reactor and test lifecycle |
@@ -66,10 +66,13 @@ The Maven reactor currently contains:
 
 The repository contains the initial multi-module project at version
 `0.0.1-SNAPSHOT`. The core artifact provides the framework-independent mapping
-and operations API; Spring Boot integration, repositories, and queries are still
-being developed. Saving an entity with a revision performs a revision-conditional
-update, and CouchDB conflicts surface as `CouchOptimisticLockingFailureException`
-carrying the entity type, document ID, and attempted revision.
+and operations API, as well as synchronous CRUD repositories through
+`CouchWeaveRepository`. Repository IDs must be `String`, and `saveAll` writes
+entities sequentially without atomic rollback. Spring Boot integration and
+queries are still being developed. Saving an entity with a revision performs a
+revision-conditional update, and CouchDB conflicts surface as
+`CouchOptimisticLockingFailureException` carrying the entity type, document ID,
+and attempted revision.
 
 ## Boot-independent operations
 
@@ -91,6 +94,18 @@ var saved = operations.save(document);
 the mapping context default. Saved entities are reconstructed with CouchDB's
 returned identifier and revision, which supports immutable records and
 generated identifiers.
+
+## Repositories
+
+Repository interfaces extend `CouchWeaveRepository<T, String>`; repository IDs
+must be `String`:
+
+```java
+interface BookRepository extends CouchWeaveRepository<Book, String> {}
+```
+
+The public `@EnableCouchWeaveRepositories` activation is planned for a later
+issue. The repository infrastructure is available in the core module.
 
 The [compatibility policy](docs/compatibility.md) records the initial Java,
 Spring Data, Spring Boot, and CouchDB version contract. The

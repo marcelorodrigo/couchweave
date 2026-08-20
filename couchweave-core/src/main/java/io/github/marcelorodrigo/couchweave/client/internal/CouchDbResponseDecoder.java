@@ -1,6 +1,8 @@
 package io.github.marcelorodrigo.couchweave.client.internal;
 
 import io.github.marcelorodrigo.couchweave.client.CouchDbResponseException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
@@ -56,6 +58,33 @@ final class CouchDbResponseDecoder {
         }
         return new CouchDbWriteResult(
                 requireText(body, "id", response, context), requireText(body, "rev", response, context));
+    }
+
+    /**
+     * Decodes document bodies from a CouchDB {@code _all_docs?include_docs=true} response.
+     *
+     * @param response successful CouchDB response
+     * @param context request location used in any decoding failure
+     * @return document objects in response order
+     */
+    List<JsonNode> decodeDocuments(CouchDbResponse response, CouchDbRequestContext context) {
+        var body = decodeObject(response, context);
+        var rows = body.get("rows");
+        if (rows == null || !rows.isArray()) {
+            throw invalidResponse(response, context, new IllegalArgumentException("rows must be an array"));
+        }
+        var documents = new ArrayList<JsonNode>();
+        for (var row : rows) {
+            if (row == null || !row.isObject()) {
+                throw invalidResponse(response, context, new IllegalArgumentException("row must be an object"));
+            }
+            var document = row.get("doc");
+            if (document == null || !document.isObject()) {
+                throw invalidResponse(response, context, new IllegalArgumentException("doc must be an object"));
+            }
+            documents.add(document);
+        }
+        return List.copyOf(documents);
     }
 
     /**

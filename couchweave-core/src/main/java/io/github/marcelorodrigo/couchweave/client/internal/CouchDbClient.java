@@ -1,6 +1,7 @@
 package io.github.marcelorodrigo.couchweave.client.internal;
 
 import io.github.marcelorodrigo.couchweave.client.CouchDbClientSettings;
+import java.util.List;
 import java.util.Optional;
 import tools.jackson.databind.JsonNode;
 
@@ -40,6 +41,17 @@ public interface CouchDbClient {
      * @return document contents, or an empty optional when CouchDB returns not found
      */
     Optional<JsonNode> getDocument(String database, String documentId);
+
+    /**
+     * Reads all document bodies from the database using CouchDB's {@code _all_docs} endpoint.
+     *
+     * <p>The result contains no pagination metadata or raw CouchDB row objects, and this operation
+     * does not paginate.
+     *
+     * @param database source database
+     * @return document bodies in CouchDB response order
+     */
+    List<JsonNode> getAllDocuments(String database);
 
     /**
      * Checks whether a document exists without downloading its body.
