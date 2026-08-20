@@ -231,6 +231,56 @@ class RestClientCouchDbClientTest {
     }
 
     @Test
+    @DisplayName("should fetch all document bodies with the include docs query")
+    void shouldFetchAllDocumentBodiesWithTheIncludeDocsQuery() throws IOException {
+        // given
+        var request = new AtomicReference<HttpExchange>();
+        startServer(exchange -> {
+            request.set(exchange);
+            respond(exchange, 200, "{\"rows\":[{\"doc\":{\"_id\":\"book-1\",\"title\":\"CouchWeave\"}}]}");
+        });
+        var client = client("", null, null, Duration.ofSeconds(1));
+
+        // when
+        var documents = client.getAllDocuments("books");
+
+        // then
+        assertThat(documents)
+                .singleElement()
+                .satisfies(document ->
+                        assertThat(document.get("title").stringValue()).isEqualTo("CouchWeave"));
+        assertThat(request.get().getRequestMethod()).isEqualTo("GET");
+        assertThat(request.get().getRequestURI().getRawPath()).isEqualTo("/books/_all_docs");
+        assertThat(request.get().getRequestURI().getRawQuery()).isEqualTo("include_docs=true");
+    }
+
+    @Test
+    @DisplayName("should translate an all documents HTTP failure through the transport boundary")
+    void shouldTranslateAnAllDocumentsHttpFailureThroughTheTransportBoundary() throws IOException {
+        // given
+        startServer(exchange -> respond(exchange, 500, "{\"error\":\"server_error\",\"reason\":\"failed\"}"));
+        var client = client("", null, null, Duration.ofSeconds(1));
+
+        // when / then
+        assertThatThrownBy(() -> client.getAllDocuments("books"))
+                .isInstanceOf(CouchDbResponseException.class)
+                .hasMessageContaining("books");
+    }
+
+    @Test
+    @DisplayName("should reject a malformed all documents success response")
+    void shouldRejectAMalformedAllDocumentsSuccessResponse() throws IOException {
+        // given
+        startServer(exchange -> respond(exchange, 200, "{\"rows\":[{\"doc\":null}]}"));
+        var client = client("", null, null, Duration.ofSeconds(1));
+
+        // when / then
+        assertThatThrownBy(() -> client.getAllDocuments("books"))
+                .isInstanceOf(CouchDbResponseException.class)
+                .hasMessageContaining("unreadable success response");
+    }
+
+    @Test
     @DisplayName("should return an empty result when a document is not found")
     void shouldReturnAnEmptyResultWhenADocumentIsNotFound() throws IOException {
         // given

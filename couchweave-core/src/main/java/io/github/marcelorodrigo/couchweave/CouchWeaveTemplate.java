@@ -6,6 +6,7 @@ import io.github.marcelorodrigo.couchweave.client.internal.CouchDbClient;
 import io.github.marcelorodrigo.couchweave.mapping.CouchPersistentEntity;
 import io.github.marcelorodrigo.couchweave.mapping.CouchPersistentProperty;
 import io.github.marcelorodrigo.couchweave.mapping.CouchWeaveConverter;
+import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Optional;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
@@ -21,6 +22,7 @@ public final class CouchWeaveTemplate implements CouchWeaveOperations {
 
     private static final String ID_FIELD = "_id";
     private static final String REVISION_FIELD = "_rev";
+    private static final String DISCRIMINATOR_FIELD = "couchweave_type";
 
     private final CouchDbClient client;
     private final CouchWeaveConverter converter;
@@ -78,6 +80,46 @@ public final class CouchWeaveTemplate implements CouchWeaveOperations {
         var entityMetadata = getRequiredEntity(entityType);
         return client.getDocument(entityMetadata.getDatabase(), id)
                 .map(document -> converter.read(entityType, document));
+    }
+
+    /**
+     * Finds all documents whose discriminator matches the requested mapped entity type.
+     *
+     * @param entityType mapped entity type
+     * @param <T> entity type
+     * @return matching entities in CouchDB {@code _all_docs} response order
+     */
+    @Override
+    public <T> Iterable<T> findAll(Class<T> entityType) {
+        var entityMetadata = getRequiredEntity(entityType);
+        var documents = client.getAllDocuments(entityMetadata.getDatabase());
+        var result = new ArrayList<T>();
+        for (var document : documents) {
+            if (matchesEntity(document, entityMetadata)) {
+                result.add(converter.read(entityType, document));
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Counts all documents whose discriminator matches the requested mapped entity type.
+     *
+     * @param entityType mapped entity type
+     * @return number of matching documents
+     */
+    @Override
+    public long count(Class<?> entityType) {
+        var entityMetadata = getRequiredEntity(entityType);
+        var documents = client.getAllDocuments(entityMetadata.getDatabase());
+        long count = 0;
+        for (var document : documents) {
+            if (matchesEntity(document, entityMetadata)) {
+                converter.read(entityType, document);
+                count++;
+            }
+        }
+        return count;
     }
 
     @Override
@@ -215,6 +257,15 @@ public final class CouchWeaveTemplate implements CouchWeaveOperations {
             throw new IllegalStateException("CouchDB document must contain a nonblank " + fieldName);
         }
         return value.stringValue();
+    }
+
+    private static boolean matchesEntity(JsonNode document, CouchPersistentEntity<?> entityMetadata) {
+        var id = document.get(ID_FIELD);
+        var discriminator = document.get(DISCRIMINATOR_FIELD);
+        return (id == null || !id.isString() || !id.stringValue().startsWith("_design/"))
+                && discriminator != null
+                && discriminator.isString()
+                && entityMetadata.getDiscriminator().equals(discriminator.stringValue());
     }
 
     /**

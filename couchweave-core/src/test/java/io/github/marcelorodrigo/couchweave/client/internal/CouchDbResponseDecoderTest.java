@@ -44,6 +44,48 @@ class CouchDbResponseDecoderTest {
         assertThat(result).isEqualTo(new CouchDbWriteResult("book-42", "2-def"));
     }
 
+    @Test
+    @DisplayName("should decode document bodies from an all documents response in order")
+    void shouldDecodeDocumentBodiesFromAnAllDocumentsResponseInOrder() {
+        // given
+        var response = response("""
+                {"total_rows":2,"rows":[{"id":"book-1","doc":{"_id":"book-1","title":"First"}},
+                {"id":"book-2","doc":{"_id":"book-2","title":"Second"}}]}
+                """);
+
+        // when
+        var documents = decoder.decodeDocuments(response, context);
+
+        // then
+        assertThat(documents)
+                .extracting(document -> document.get("title").stringValue())
+                .containsExactly("First", "Second");
+    }
+
+    @Test
+    @DisplayName("should return an empty list when an all documents response has no rows")
+    void shouldReturnAnEmptyListWhenAnAllDocumentsResponseHasNoRows() {
+        // given
+        var response = response("{\"rows\":[]}");
+
+        // when
+        var documents = decoder.decodeDocuments(response, context);
+
+        // then
+        assertThat(documents).isEmpty();
+    }
+
+    @ParameterizedTest
+    @MethodSource("invalidAllDocuments")
+    @DisplayName("should reject malformed all documents responses")
+    void shouldRejectMalformedAllDocumentsResponses(String body) {
+        // given
+        var response = response(body);
+
+        // when / then
+        assertInvalidDocumentsResponse(response);
+    }
+
     @ParameterizedTest
     @MethodSource("invalidDocuments")
     @DisplayName("should reject malformed document responses")
@@ -76,12 +118,28 @@ class CouchDbResponseDecoderTest {
         return new CouchDbResponse(200, HttpHeaders.EMPTY, body);
     }
 
+    private void assertInvalidDocumentsResponse(CouchDbResponse response) {
+        assertThatThrownBy(() -> decoder.decodeDocuments(response, context))
+                .isInstanceOf(CouchDbResponseException.class)
+                .extracting(exception -> ((CouchDbResponseException) exception).error())
+                .isEqualTo("invalid_response");
+    }
+
     private static Stream<Arguments> invalidDocuments() {
         return Stream.of(
                 Arguments.of("not-json"),
                 Arguments.of("[]"),
                 Arguments.of("{\"_rev\":\"1-abc\"}"),
                 Arguments.of("{\"_id\":\"book-42\"}"));
+    }
+
+    private static Stream<Arguments> invalidAllDocuments() {
+        return Stream.of(
+                Arguments.of("{}"),
+                Arguments.of("{\"rows\":{}}"),
+                Arguments.of("{\"rows\":[null]}"),
+                Arguments.of("{\"rows\":[{}]}"),
+                Arguments.of("{\"rows\":[{\"doc\":[]}]}"));
     }
 
     private static Stream<Arguments> invalidWriteResults() {

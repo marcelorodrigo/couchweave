@@ -14,9 +14,8 @@ untested support claim.
 | Spring Boot | 4.1.x | 4.1.0 | Imported by the parent Maven project and used by the Boot integration modules. |
 | Apache CouchDB | 3.5.x primary; 3.4.x compatibility | 3.5 and 3.4 | Repository integration tests will target both lines when CouchDB behavior is implemented. |
 
-The CouchDB entries are compatibility targets, not claims about behavior that
-already exists. CouchWeave is still in its design phase and does not yet
-provide a working CouchDB integration. The [feature-support policy](supported-features.md)
+The CouchDB entries are compatibility targets for the behavior currently
+implemented by CouchWeave. The [feature-support policy](supported-features.md)
 tracks when planned behavior becomes supported.
 
 ## Public artifacts
