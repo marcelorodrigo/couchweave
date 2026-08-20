@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Optional;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
+import org.springframework.web.client.RestClient;
 import tools.jackson.databind.JsonNode;
 
 /**
@@ -20,11 +21,16 @@ import tools.jackson.databind.JsonNode;
  */
 public final class CouchWeaveTemplate implements CouchWeaveOperations {
 
+    /** CouchDB document identifier field. */
     private static final String ID_FIELD = "_id";
+    /** CouchDB document revision field. */
     private static final String REVISION_FIELD = "_rev";
+    /** CouchWeave entity discriminator field. */
     private static final String DISCRIMINATOR_FIELD = "couchweave_type";
 
+    /** CouchDB client used for document operations. */
     private final CouchDbClient client;
+    /** Converter used for entity and document mapping. */
     private final CouchWeaveConverter converter;
 
     /**
@@ -35,6 +41,26 @@ public final class CouchWeaveTemplate implements CouchWeaveOperations {
      */
     public CouchWeaveTemplate(CouchDbClientSettings settings, CouchWeaveConverter converter) {
         this(CouchDbClient.create(Objects.requireNonNull(settings, "settings must not be null")), converter);
+    }
+
+    /**
+     * Creates a template backed by a caller-configured REST client builder.
+     *
+     * <p>The settings still determine the server URI, JSON accept header, and basic authentication,
+     * but the transport, timeouts, and other builder configuration are preserved so applications can
+     * customize the HTTP layer.
+     *
+     * @param settings validated CouchDB connection settings
+     * @param restClientBuilder caller-configured REST client builder
+     * @param converter entity/document converter and mapping metadata provider
+     */
+    public CouchWeaveTemplate(
+            CouchDbClientSettings settings, RestClient.Builder restClientBuilder, CouchWeaveConverter converter) {
+        this(
+                CouchDbClient.create(
+                        Objects.requireNonNull(settings, "settings must not be null"),
+                        Objects.requireNonNull(restClientBuilder, "restClientBuilder must not be null")),
+                converter);
     }
 
     /**
@@ -259,6 +285,13 @@ public final class CouchWeaveTemplate implements CouchWeaveOperations {
         return value.stringValue();
     }
 
+    /**
+     * Checks whether a document belongs to the requested persistent entity.
+     *
+     * @param document CouchDB document tree
+     * @param entityMetadata persistent entity metadata
+     * @return whether the document matches the entity
+     */
     private static boolean matchesEntity(JsonNode document, CouchPersistentEntity<?> entityMetadata) {
         var id = document.get(ID_FIELD);
         var discriminator = document.get(DISCRIMINATOR_FIELD);

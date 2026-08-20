@@ -12,9 +12,13 @@ import org.springframework.data.repository.core.EntityInformation;
  */
 public class CouchWeaveEntityInformation<T, I> implements EntityInformation<T, I> {
 
+    /** The mapped CouchWeave entity metadata. */
     private final CouchPersistentEntity<T> entityMetadata;
 
-    /** Creates entity information for resolved CouchWeave metadata. */
+    /** Creates entity information for resolved CouchWeave metadata.
+     *
+     * @param entityMetadata the resolved CouchWeave entity metadata
+     */
     public CouchWeaveEntityInformation(CouchPersistentEntity<T> entityMetadata) {
         this.entityMetadata = Objects.requireNonNull(entityMetadata, "entityMetadata must not be null");
     }

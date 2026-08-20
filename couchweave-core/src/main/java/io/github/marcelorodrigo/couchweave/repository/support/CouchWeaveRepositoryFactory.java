@@ -13,10 +13,16 @@ import org.springframework.data.repository.core.support.RepositoryFactorySupport
 /** Creates Spring Data repository proxies backed by CouchWeave's synchronous operations. */
 public class CouchWeaveRepositoryFactory extends RepositoryFactorySupport {
 
+    /** The synchronous CouchWeave operations used by repositories. */
     private final CouchWeaveOperations operations;
+    /** The mapping context used to resolve persistent entities. */
     private final CouchMappingContext mappingContext;
 
-    /** Creates a repository factory with explicit CouchWeave dependencies. */
+    /** Creates a repository factory with explicit CouchWeave dependencies.
+     *
+     * @param operations the synchronous CouchWeave operations
+     * @param mappingContext the CouchWeave mapping context
+     */
     public CouchWeaveRepositoryFactory(CouchWeaveOperations operations, CouchMappingContext mappingContext) {
         this.operations = Objects.requireNonNull(operations, "operations must not be null");
         this.mappingContext = Objects.requireNonNull(mappingContext, "mappingContext must not be null");
@@ -65,15 +71,22 @@ public class CouchWeaveRepositoryFactory extends RepositoryFactorySupport {
         return new CouchWeaveEntityInformation<>(entity(domainClass));
     }
 
+    /** Resolves the persistent entity for a domain type.
+     *
+     * @param domainClass the domain type to resolve
+     * @return the resolved CouchWeave persistent entity
+     */
     private <T> CouchPersistentEntity<T> entity(Class<T> domainClass) {
-        if (!mappingContext.hasPersistentEntityFor(domainClass)) {
+        // A non-strict mapping context lazily creates the entity for annotated document types,
+        // which is required when repository domain types are discovered during scanning.
+        var persistentEntity = mappingContext.getPersistentEntity(domainClass);
+        if (persistentEntity == null) {
             throw new CouchWeaveRepositoryConfigurationException(
                     "CouchWeave domain type '%s' has no valid @CouchDocument mapping registered."
                             .formatted(domainClass.getName()));
         }
-        // The mapping context resolves the entity for the requested domain class.
         @SuppressWarnings("unchecked")
-        var entity = (CouchPersistentEntity<T>) mappingContext.getRequiredPersistentEntity(domainClass);
+        var entity = (CouchPersistentEntity<T>) persistentEntity;
         return entity;
     }
 }

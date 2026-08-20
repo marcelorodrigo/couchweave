@@ -11,6 +11,7 @@ import org.springframework.data.convert.CustomConversions;
  */
 public final class CouchWeaveCustomConversions extends CustomConversions {
 
+    /** The conversion service configured with the registered converters. */
     private final ConversionService conversionService;
 
     /**
@@ -25,6 +26,11 @@ public final class CouchWeaveCustomConversions extends CustomConversions {
         this.conversionService = service;
     }
 
+    /**
+     * Returns the conversion service configured with the registered converters.
+     *
+     * @return the configured conversion service
+     */
     ConversionService getConversionService() {
         return conversionService;
     }

@@ -2,7 +2,9 @@ package io.github.marcelorodrigo.couchweave.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import io.github.marcelorodrigo.couchweave.CouchWeaveOperations;
 import io.github.marcelorodrigo.couchweave.mapping.CouchDocument;
+import io.github.marcelorodrigo.couchweave.mapping.CouchMappingContext;
 import io.github.marcelorodrigo.couchweave.repository.config.CouchWeaveRepositoryConfigurationExtension;
 import io.github.marcelorodrigo.couchweave.repository.support.CouchWeaveRepositoryFactoryBean;
 import io.github.marcelorodrigo.couchweave.repository.support.SimpleCouchWeaveRepository;
@@ -76,16 +78,22 @@ class CouchWeaveRepositoryConfigurationExtensionTest {
     }
 
     @Test
-    @DisplayName("should wire the mapping context property reference")
+    @DisplayName("should wire the mapping context and operations property references by type")
     void shouldWireMappingContextPropertyReference() {
         // given
         var builder = BeanDefinitionBuilder.genericBeanDefinition(String.class);
         // when
         extension.postProcess(builder, (RepositoryConfigurationSource) null);
         // then
-        var propertyValue = builder.getRawBeanDefinition().getPropertyValues().get("mappingContext");
-        assertThat(propertyValue).isInstanceOf(RuntimeBeanReference.class);
-        assertThat(((RuntimeBeanReference) propertyValue).getBeanName()).isEqualTo("couchMappingContext");
+        var mappingReference =
+                builder.getRawBeanDefinition().getPropertyValues().get("mappingContext");
+        assertThat(mappingReference).isInstanceOf(RuntimeBeanReference.class);
+        assertThat(((RuntimeBeanReference) mappingReference).getBeanType()).isEqualTo(CouchMappingContext.class);
+
+        var operationsReference =
+                builder.getRawBeanDefinition().getPropertyValues().get("operations");
+        assertThat(operationsReference).isInstanceOf(RuntimeBeanReference.class);
+        assertThat(((RuntimeBeanReference) operationsReference).getBeanType()).isEqualTo(CouchWeaveOperations.class);
     }
 
     static class ExposedExtension extends CouchWeaveRepositoryConfigurationExtension {

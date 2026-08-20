@@ -61,6 +61,20 @@ final class RestClientCouchDbClient implements CouchDbClient {
     }
 
     /**
+     * Creates a client using a caller-configured REST client builder.
+     *
+     * <p>The builder's base URL, default JSON header, and basic authentication are still applied
+     * from the validated settings, but the transport, timeouts, and other builder configuration
+     * are preserved so applications can customize the HTTP layer.
+     *
+     * @param settings validated CouchDB connection settings
+     * @param restClientBuilder caller-configured REST client builder
+     */
+    RestClientCouchDbClient(CouchDbClientSettings settings, RestClient.Builder restClientBuilder) {
+        this(settings, createRestClient(settings, restClientBuilder));
+    }
+
+    /**
      * Creates a client with a supplied HTTP transport and failure translator.
      *
      * @param settings validated CouchDB connection settings
@@ -233,6 +247,28 @@ final class RestClientCouchDbClient implements CouchDbClient {
                 .baseUrl(settings.serverUri())
                 .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
                 .requestFactory(createRequestFactory(settings));
+        if (settings.hasCredentials()) {
+            builder.defaultHeaders(
+                    headers -> headers.setBasicAuth(settings.username(), settings.password(), StandardCharsets.UTF_8));
+        }
+        return builder.build();
+    }
+
+    /**
+     * Creates the Spring HTTP client from a caller-configured builder, preserving the caller's
+     * transport and timeouts while still applying the server URI, JSON accept header, and basic
+     * authentication from the validated settings.
+     *
+     * @param settings validated CouchDB connection settings
+     * @param restClientBuilder caller-configured REST client builder
+     * @return configured Spring REST client
+     */
+    static RestClient createRestClient(CouchDbClientSettings settings, RestClient.Builder restClientBuilder) {
+        Objects.requireNonNull(settings, "settings must not be null");
+        Objects.requireNonNull(restClientBuilder, "restClientBuilder must not be null");
+        var builder = restClientBuilder
+                .baseUrl(settings.serverUri())
+                .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
         if (settings.hasCredentials()) {
             builder.defaultHeaders(
                     headers -> headers.setBasicAuth(settings.username(), settings.password(), StandardCharsets.UTF_8));

@@ -3,6 +3,7 @@ package io.github.marcelorodrigo.couchweave.client.internal;
 import io.github.marcelorodrigo.couchweave.client.CouchDbClientSettings;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.web.client.RestClient;
 import tools.jackson.databind.JsonNode;
 
 /**
@@ -21,6 +22,21 @@ public interface CouchDbClient {
      */
     static CouchDbClient create(CouchDbClientSettings settings) {
         return new RestClientCouchDbClient(settings);
+    }
+
+    /**
+     * Creates a client backed by a caller-configured REST client builder.
+     *
+     * <p>The settings still determine the server URI, JSON accept header, and basic authentication,
+     * but the transport, timeouts, and other builder configuration are preserved so applications can
+     * customize the HTTP layer.
+     *
+     * @param settings validated CouchDB connection settings
+     * @param restClientBuilder caller-configured REST client builder
+     * @return a reusable CouchDB client
+     */
+    static CouchDbClient create(CouchDbClientSettings settings, RestClient.Builder restClientBuilder) {
+        return new RestClientCouchDbClient(settings, restClientBuilder);
     }
 
     /**

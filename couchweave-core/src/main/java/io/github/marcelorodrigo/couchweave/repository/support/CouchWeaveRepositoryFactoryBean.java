@@ -16,20 +16,31 @@ import org.springframework.data.repository.core.support.RepositoryFactoryBeanSup
 public class CouchWeaveRepositoryFactoryBean<T extends Repository<S, I>, S, I>
         extends RepositoryFactoryBeanSupport<T, S, I> {
 
+    /** The synchronous CouchWeave operations dependency. */
     private CouchWeaveOperations operations;
+    /** The CouchWeave mapping context dependency. */
     private CouchMappingContext mappingContext;
 
-    /** Creates a factory bean for the supplied repository interface. */
+    /** Creates a factory bean for the supplied repository interface.
+     *
+     * @param repositoryInterface the repository interface to configure
+     */
     protected CouchWeaveRepositoryFactoryBean(Class<? extends T> repositoryInterface) {
         super(repositoryInterface);
     }
 
-    /** Sets the synchronous CouchWeave operations dependency. */
+    /** Sets the synchronous CouchWeave operations dependency.
+     *
+     * @param operations the synchronous CouchWeave operations
+     */
     public void setOperations(CouchWeaveOperations operations) {
         this.operations = operations;
     }
 
-    /** Sets the CouchWeave mapping context used by the repository factory. */
+    /** Sets the CouchWeave mapping context used by the repository factory.
+     *
+     * @param mappingContext the CouchWeave mapping context
+     */
     public void setMappingContext(CouchMappingContext mappingContext) {
         this.mappingContext = mappingContext;
     }

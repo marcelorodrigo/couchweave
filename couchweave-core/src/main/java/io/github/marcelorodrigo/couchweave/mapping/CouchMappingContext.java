@@ -1,5 +1,6 @@
 package io.github.marcelorodrigo.couchweave.mapping;
 
+import io.github.marcelorodrigo.couchweave.client.CouchDbClientSettings;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -16,21 +17,80 @@ import org.springframework.data.mapping.model.SimpleTypeHolder;
 public final class CouchMappingContext
         extends AbstractMappingContext<CouchPersistentEntity<?>, CouchPersistentProperty> {
 
+    /** The fallback database used by documents without an override. */
     private final String defaultDatabase;
+
+    /** Whether unknown types are rejected instead of being created lazily. */
+    private final boolean strict;
+
+    /** The registered document discriminator types. */
     private final ConcurrentMap<String, Class<?>> discriminatorTypes = new ConcurrentHashMap<>();
 
     /**
      * Creates an empty mapping context using the supplied fallback database.
      *
+     * <p>The context is strict: unknown types are rejected rather than created lazily.
+     *
      * @param defaultDatabase the nonblank database used by documents without an override
      * @throws IllegalArgumentException when {@code defaultDatabase} is {@code null} or blank
      */
     public CouchMappingContext(String defaultDatabase) {
+        this(defaultDatabase, true);
+    }
+
+    /**
+     * Creates an empty mapping context using the database of the supplied settings as the fallback.
+     *
+     * @param settings validated CouchDB connection settings whose database becomes the fallback
+     * @param strict when {@code true}, unknown types are rejected instead of being created lazily
+     * @throws IllegalArgumentException when {@code settings} is {@code null}
+     */
+    public CouchMappingContext(CouchDbClientSettings settings, boolean strict) {
+        this(databaseOf(settings), strict);
+    }
+
+    /**
+     * Returns the database configured in the supplied settings.
+     *
+     * @param settings the CouchDB connection settings
+     * @return the configured database
+     * @throws IllegalArgumentException when {@code settings} is {@code null}
+     */
+    private static String databaseOf(CouchDbClientSettings settings) {
+        if (settings == null) {
+            throw new IllegalArgumentException("settings must not be null");
+        }
+        return settings.database();
+    }
+
+    /**
+     * Creates an empty mapping context using the supplied fallback database.
+     *
+     * <p>A non-strict context lazily creates persistent entities for annotated document types
+     * on first access, which lets repository infrastructure resolve domain types discovered
+     * during scanning. Strict contexts require every entity to be registered before
+     * initialization and reject unknown types.
+     *
+     * @param defaultDatabase the nonblank database used by documents without an override
+     * @param strict when {@code true}, unknown types are rejected instead of being created lazily
+     * @throws IllegalArgumentException when {@code defaultDatabase} is {@code null} or blank
+     */
+    public CouchMappingContext(String defaultDatabase, boolean strict) {
         if (defaultDatabase == null || defaultDatabase.isBlank()) {
             throw new IllegalArgumentException("defaultDatabase must not be blank");
         }
         this.defaultDatabase = defaultDatabase;
-        setStrict(true);
+        this.strict = strict;
+        setStrict(strict);
+    }
+
+    /**
+     * Returns whether unknown types are rejected instead of being created lazily.
+     *
+     * @return {@code true} when unknown types are rejected
+     */
+    public boolean isStrict() {
+        return strict;
     }
 
     @Override
@@ -62,10 +122,21 @@ public final class CouchMappingContext
                 && AnnotatedElementUtils.hasAnnotation(typeInformation.getType(), CouchDocument.class);
     }
 
+    /**
+     * Returns whether the entity has been verified.
+     *
+     * @param entity the persistent entity
+     * @return {@code true} when the entity has been verified
+     */
     private boolean isVerified(CouchPersistentEntity<?> entity) {
         return entity instanceof BasicCouchPersistentEntity<?> basicEntity && basicEntity.isVerified();
     }
 
+    /**
+     * Registers the entity's discriminator type.
+     *
+     * @param entity the persistent entity to register
+     */
     private void registerDiscriminator(CouchPersistentEntity<?> entity) {
         var conflictingType = discriminatorTypes.putIfAbsent(entity.getDiscriminator(), entity.getType());
         if (conflictingType != null && !conflictingType.equals(entity.getType())) {
@@ -74,6 +145,12 @@ public final class CouchMappingContext
         }
     }
 
+    /**
+     * Returns the deepest mapping exception in the cause chain.
+     *
+     * @param exception the mapping exception to unwrap
+     * @return the deepest mapping exception
+     */
     private MappingException unwrapMappingException(MappingException exception) {
         var detailedException = exception;
         while (detailedException.getCause() instanceof MappingException cause) {

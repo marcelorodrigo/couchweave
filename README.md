@@ -104,8 +104,29 @@ must be `String`:
 interface BookRepository extends CouchWeaveRepository<Book, String> {}
 ```
 
-The public `@EnableCouchWeaveRepositories` activation is planned for a later
-issue. The repository infrastructure is available in the core module.
+Activate repositories in a plain Spring application (no Spring Boot required) with
+`@EnableCouchWeaveRepositories`:
+
+```java
+@Configuration
+@EnableCouchWeaveRepositories(basePackageClasses = BookRepository.class)
+class CouchWeaveConfig {
+
+    @Bean
+    CouchDbClientSettings couchDbClientSettings() {
+        return new CouchDbClientSettings(URI.create("http://localhost:5984"), "my_database");
+    }
+}
+```
+
+The annotation scans the standard Spring Data attributes (`basePackages`,
+`basePackageClasses`, `includeFilters`, `excludeFilters`, `considerNestedRepositories`,
+and others). CouchWeave supplies default infrastructure — a REST client builder, mapping
+context, custom conversions, converter, and `CouchWeaveOperations` — so only the
+`CouchDbClientSettings` bean is required. Supply any of those beans to override the
+corresponding default; explicit mapping contexts keep their configured strictness, while
+the generated default mapping context resolves repository domain types lazily. Context
+startup never opens a network connection.
 
 The [compatibility policy](docs/compatibility.md) records the initial Java,
 Spring Data, Spring Boot, and CouchDB version contract. The
