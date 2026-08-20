@@ -17,10 +17,15 @@ import tools.jackson.databind.node.ObjectNode;
  */
 public final class MappingCouchWeaveConverter implements CouchWeaveConverter {
 
+    /** The mapping context used to resolve persistent entities. */
     private final CouchMappingContext mappingContext;
+    /** The Jackson mapper used to convert JSON values. */
     private final ObjectMapper objectMapper;
+    /** The property conversion registry. */
     private final CouchWeaveCustomConversions customConversions;
+    /** The service used to convert property values. */
     private final ConversionService conversionService;
+    /** The instantiators used to create persistent entities. */
     private final EntityInstantiators entityInstantiators = new EntityInstantiators();
 
     /**
@@ -137,6 +142,12 @@ public final class MappingCouchWeaveConverter implements CouchWeaveConverter {
         return conversionService;
     }
 
+    /**
+     * Gets the persistent entity for the supplied type.
+     *
+     * @param type the mapped type
+     * @return the persistent entity
+     */
     @SuppressWarnings("unchecked")
     private <T> CouchPersistentEntity<T> getRequiredEntity(Class<T> type) {
         try {
@@ -148,6 +159,14 @@ public final class MappingCouchWeaveConverter implements CouchWeaveConverter {
         }
     }
 
+    /**
+     * Writes a property value to a document.
+     *
+     * @param document the document being written
+     * @param property the property to write
+     * @param value the property value
+     * @param entityType the mapped entity type
+     */
     private void writeProperty(
             ObjectNode document, CouchPersistentProperty property, Object value, Class<?> entityType) {
         try {
@@ -166,6 +185,13 @@ public final class MappingCouchWeaveConverter implements CouchWeaveConverter {
         }
     }
 
+    /**
+     * Reads a property value from a document.
+     *
+     * @param property the property to read
+     * @param source the source document
+     * @return the property value
+     */
     private Object readProperty(CouchPersistentProperty property, JsonNode source) {
         var value = source.get(property.getFieldName());
         if (value == null || value.isNull()) {
@@ -185,6 +211,12 @@ public final class MappingCouchWeaveConverter implements CouchWeaveConverter {
         }
     }
 
+    /**
+     * Finds the revision property of an entity.
+     *
+     * @param entity the persistent entity
+     * @return the revision property, or {@code null} when none exists
+     */
     private CouchPersistentProperty findRevisionProperty(CouchPersistentEntity<?> entity) {
         for (var property : entity) {
             if (property.isRevisionProperty()) {
@@ -194,6 +226,12 @@ public final class MappingCouchWeaveConverter implements CouchWeaveConverter {
         return null;
     }
 
+    /**
+     * Gets the generic type represented by a property.
+     *
+     * @param property the persistent property
+     * @return the property's generic type
+     */
     private Type getGenericType(CouchPersistentProperty property) {
         var field = property.getField();
         if (field != null) {
@@ -203,6 +241,12 @@ public final class MappingCouchWeaveConverter implements CouchWeaveConverter {
         return getter == null ? property.getType() : getter.getGenericReturnType();
     }
 
+    /**
+     * Validates the required metadata in a document.
+     *
+     * @param entity the persistent entity
+     * @param source the source document
+     */
     private void validateDocument(CouchPersistentEntity<?> entity, JsonNode source) {
         requireNonblankText(source, CouchFieldNames.ID, entity.getType(), true);
         requireNonblankText(source, CouchFieldNames.REVISION, entity.getType(), false);
@@ -222,6 +266,14 @@ public final class MappingCouchWeaveConverter implements CouchWeaveConverter {
         }
     }
 
+    /**
+     * Requires a document field to contain nonblank text.
+     *
+     * @param source the source document
+     * @param field the field name
+     * @param entityType the mapped entity type
+     * @param required whether the field is required
+     */
     private void requireNonblankText(JsonNode source, String field, Class<?> entityType, boolean required) {
         var value = source.get(field);
         if (value == null && !required) {
@@ -233,6 +285,15 @@ public final class MappingCouchWeaveConverter implements CouchWeaveConverter {
         }
     }
 
+    /**
+     * Creates an exception describing a property mapping failure.
+     *
+     * @param entityType the mapped entity type
+     * @param property the affected property
+     * @param operation the mapping operation
+     * @param cause the underlying cause
+     * @return the property mapping exception
+     */
     private PropertyMappingException propertyException(
             Class<?> entityType, CouchPersistentProperty property, String operation, Throwable cause) {
         return new PropertyMappingException(
@@ -241,23 +302,45 @@ public final class MappingCouchWeaveConverter implements CouchWeaveConverter {
                 cause);
     }
 
+    /** Exception raised when a property cannot be mapped. */
     private static final class PropertyMappingException extends MappingException {
 
+        /**
+         * Creates a property mapping exception.
+         *
+         * @param message the exception message
+         * @param cause the underlying cause
+         */
         private PropertyMappingException(String message, Throwable cause) {
             super(message, cause);
         }
     }
 
+    /** Provides constructor parameter values from a source document. */
     private final class DocumentParameterValueProvider implements ParameterValueProvider<CouchPersistentProperty> {
 
+        /** The persistent entity being instantiated. */
         private final CouchPersistentEntity<?> entity;
+        /** The source document. */
         private final JsonNode source;
 
+        /**
+         * Creates a parameter value provider for a document.
+         *
+         * @param entity the persistent entity
+         * @param source the source document
+         */
         private DocumentParameterValueProvider(CouchPersistentEntity<?> entity, JsonNode source) {
             this.entity = entity;
             this.source = source;
         }
 
+        /**
+         * Gets a constructor parameter value from the source document.
+         *
+         * @param parameter the constructor parameter
+         * @return the parameter value
+         */
         @Override
         @SuppressWarnings("unchecked")
         public <T> T getParameterValue(Parameter<T, CouchPersistentProperty> parameter) {

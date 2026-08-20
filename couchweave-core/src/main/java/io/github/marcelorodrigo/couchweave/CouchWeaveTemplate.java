@@ -21,11 +21,16 @@ import tools.jackson.databind.JsonNode;
  */
 public final class CouchWeaveTemplate implements CouchWeaveOperations {
 
+    /** CouchDB document identifier field. */
     private static final String ID_FIELD = "_id";
+    /** CouchDB document revision field. */
     private static final String REVISION_FIELD = "_rev";
+    /** CouchWeave entity discriminator field. */
     private static final String DISCRIMINATOR_FIELD = "couchweave_type";
 
+    /** CouchDB client used for document operations. */
     private final CouchDbClient client;
+    /** Converter used for entity and document mapping. */
     private final CouchWeaveConverter converter;
 
     /**
@@ -280,6 +285,13 @@ public final class CouchWeaveTemplate implements CouchWeaveOperations {
         return value.stringValue();
     }
 
+    /**
+     * Checks whether a document belongs to the requested persistent entity.
+     *
+     * @param document CouchDB document tree
+     * @param entityMetadata persistent entity metadata
+     * @return whether the document matches the entity
+     */
     private static boolean matchesEntity(JsonNode document, CouchPersistentEntity<?> entityMetadata) {
         var id = document.get(ID_FIELD);
         var discriminator = document.get(DISCRIMINATOR_FIELD);

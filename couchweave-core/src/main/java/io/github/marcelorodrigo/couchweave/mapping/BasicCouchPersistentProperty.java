@@ -11,13 +11,24 @@ import org.springframework.data.mapping.model.AnnotationBasedPersistentProperty;
 import org.springframework.data.mapping.model.Property;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 
+/** Represents persistent metadata for a CouchDB property. */
 final class BasicCouchPersistentProperty extends AnnotationBasedPersistentProperty<CouchPersistentProperty>
         implements CouchPersistentProperty {
 
+    /** Stores the CouchField annotation. */
     private final CouchField couchField;
+    /** Indicates whether this is a revision property. */
     private final boolean revisionProperty;
+    /** Stores the resolved field name. */
     private final String fieldName;
 
+    /**
+     * Creates persistent property metadata.
+     *
+     * @param property the persistent property
+     * @param owner the owning persistent entity
+     * @param simpleTypeHolder the simple type holder
+     */
     BasicCouchPersistentProperty(
             Property property, PersistentEntity<?, CouchPersistentProperty> owner, SimpleTypeHolder simpleTypeHolder) {
         super(property, owner, simpleTypeHolder);
@@ -51,6 +62,9 @@ final class BasicCouchPersistentProperty extends AnnotationBasedPersistentProper
         return super.isIdProperty() || findPropertyAnnotation(org.springframework.data.annotation.Id.class) != null;
     }
 
+    /**
+     * @return whether the property declares a CouchField annotation
+     */
     boolean hasCouchFieldAnnotation() {
         return couchField != null;
     }
@@ -60,6 +74,12 @@ final class BasicCouchPersistentProperty extends AnnotationBasedPersistentProper
         return new Association<>(this, null);
     }
 
+    /**
+     * Finds an annotation declared on the property or its record component.
+     *
+     * @param annotationType the annotation type to find
+     * @return the matching annotation, or null when none is present
+     */
     private <A extends Annotation> A findPropertyAnnotation(Class<A> annotationType) {
         var annotation = findAnnotation(annotationType);
         if (annotation != null || !getOwner().getType().isRecord()) {
@@ -73,6 +93,11 @@ final class BasicCouchPersistentProperty extends AnnotationBasedPersistentProper
                 .orElse(null);
     }
 
+    /**
+     * Resolves the stored field name.
+     *
+     * @return the resolved field name
+     */
     private String resolveFieldName() {
         if (isIdProperty()) {
             return CouchFieldNames.ID;

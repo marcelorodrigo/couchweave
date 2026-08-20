@@ -31,42 +31,81 @@ import org.springframework.data.repository.query.QueryLookupStrategy;
 @Import(CouchWeaveRepositoriesRegistrar.class)
 public @interface EnableCouchWeaveRepositories {
 
-    /** Alias for {@link #basePackages()}. */
+    /** Alias for {@link #basePackages()}.
+     *
+     * @return base packages to scan
+     */
     String[] value() default {};
 
-    /** Base packages to scan for annotated repository interfaces. */
+    /** Base packages to scan for annotated repository interfaces.
+     *
+     * @return base packages to scan
+     */
     String[] basePackages() default {};
 
-    /** Type-safe alternative to {@link #basePackages()}; the packages of the listed classes are scanned. */
+    /** Type-safe alternative to {@link #basePackages()}; the packages of the listed classes are scanned.
+     *
+     * @return classes whose packages are scanned
+     */
     Class<?>[] basePackageClasses() default {};
 
-    /** Location of named queries; empty disables named-query lookup. */
+    /** Location of named queries; empty disables named-query lookup.
+     *
+     * @return named queries location
+     */
     String namedQueriesLocation() default "";
 
-    /** Strategy used to resolve repository query methods. */
+    /** Strategy used to resolve repository query methods.
+     *
+     * @return query lookup strategy
+     */
     QueryLookupStrategy.Key queryLookupStrategy() default QueryLookupStrategy.Key.CREATE_IF_NOT_FOUND;
 
-    /** Suffix appended to repository interfaces to locate custom implementations. */
+    /** Suffix appended to repository interfaces to locate custom implementations.
+     *
+     * @return repository implementation suffix
+     */
     String repositoryImplementationPostfix() default "Impl";
 
-    /** Factory bean used to create repository proxies. */
+    /** Factory bean used to create repository proxies.
+     *
+     * @return repository factory bean class
+     */
     Class<?> repositoryFactoryBeanClass() default CouchWeaveRepositoryFactoryBean.class;
 
-    /** Base class all repositories inherit; defaults to the Spring Data base class. */
+    /** Base class all repositories inherit; defaults to the Spring Data base class.
+     *
+     * @return repository base class
+     */
     Class<?> repositoryBaseClass() default DefaultRepositoryBaseClass.class;
 
-    /** Whether repository interfaces in nested classes are discovered. */
+    /** Whether repository interfaces in nested classes are discovered.
+     *
+     * @return whether nested repositories are considered
+     */
     boolean considerNestedRepositories() default false;
 
-    /** Bootstrap mode for the repository infrastructure. */
+    /** Bootstrap mode for the repository infrastructure.
+     *
+     * @return repository bootstrap mode
+     */
     BootstrapMode bootstrapMode() default BootstrapMode.DEFAULT;
 
-    /** Strategy for generating repository bean names. */
+    /** Strategy for generating repository bean names.
+     *
+     * @return repository bean name generator
+     */
     Class<? extends BeanNameGenerator> nameGenerator() default BeanNameGenerator.class;
 
-    /** Filters used to include repository candidates during scanning. */
+    /** Filters used to include repository candidates during scanning.
+     *
+     * @return repository inclusion filters
+     */
     Filter[] includeFilters() default {};
 
-    /** Filters used to exclude repository candidates during scanning. */
+    /** Filters used to exclude repository candidates during scanning.
+     *
+     * @return repository exclusion filters
+     */
     Filter[] excludeFilters() default {};
 }

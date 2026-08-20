@@ -9,6 +9,9 @@ import org.springframework.data.repository.config.RepositoryConfigurationExtensi
  */
 public class CouchWeaveRepositoriesRegistrar extends RepositoryBeanDefinitionRegistrarSupport {
 
+    /** Creates the registrar used by {@link EnableCouchWeaveRepositories}. */
+    public CouchWeaveRepositoriesRegistrar() {}
+
     @Override
     protected Class<? extends Annotation> getAnnotation() {
         return EnableCouchWeaveRepositories.class;

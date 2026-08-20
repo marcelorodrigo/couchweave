@@ -13,8 +13,8 @@ import io.github.marcelorodrigo.couchweave.repository.support.SimpleCouchWeaveRe
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.RuntimeBeanReference;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
@@ -28,6 +28,9 @@ import org.springframework.web.client.RestClient;
 
 /** Provides Spring Data repository discovery metadata for CouchWeave repositories. */
 public class CouchWeaveRepositoryConfigurationExtension extends RepositoryConfigurationExtensionSupport {
+
+    /** Creates the CouchWeave repository configuration extension. */
+    public CouchWeaveRepositoryConfigurationExtension() {}
 
     /** Returns the module display name. */
     @Override
@@ -117,6 +120,13 @@ public class CouchWeaveRepositoryConfigurationExtension extends RepositoryConfig
         }
     }
 
+    /**
+     * Checks whether the registry contains a bean of the requested type.
+     *
+     * @param type requested bean type
+     * @param registry bean definition registry
+     * @return whether a matching bean is registered
+     */
     private static boolean containsBeanOfType(Class<?> type, BeanDefinitionRegistry registry) {
         for (var beanName : registry.getBeanDefinitionNames()) {
             if (providesType(registry.getBeanDefinition(beanName), type)) {
@@ -126,6 +136,13 @@ public class CouchWeaveRepositoryConfigurationExtension extends RepositoryConfig
         return false;
     }
 
+    /**
+     * Checks whether a bean definition provides the requested type.
+     *
+     * @param definition bean definition to inspect
+     * @param type requested bean type
+     * @return whether the definition provides the requested type
+     */
     private static boolean providesType(BeanDefinition definition, Class<?> type) {
         var candidate = resolveBeanType(definition);
         if (candidate != null && type.isAssignableFrom(candidate)) {
@@ -141,6 +158,13 @@ public class CouchWeaveRepositoryConfigurationExtension extends RepositoryConfig
         return false;
     }
 
+    /**
+     * Resolves the object type produced by a factory bean definition.
+     *
+     * @param definition factory bean definition
+     * @param factoryBeanType factory bean type
+     * @return resolved factory bean object type, or {@code null}
+     */
     private static Class<?> resolveFactoryBeanObjectType(BeanDefinition definition, Class<?> factoryBeanType) {
         var attribute = definition.getAttribute(FactoryBean.OBJECT_TYPE_ATTRIBUTE);
         if (attribute instanceof Class<?> clazz) {
@@ -152,9 +176,18 @@ public class CouchWeaveRepositoryConfigurationExtension extends RepositoryConfig
                 return resolved;
             }
         }
-        return ResolvableType.forClass(factoryBeanType).as(FactoryBean.class).getGeneric(0).resolve();
+        return ResolvableType.forClass(factoryBeanType)
+                .as(FactoryBean.class)
+                .getGeneric(0)
+                .resolve();
     }
 
+    /**
+     * Resolves the class represented by a bean definition.
+     *
+     * @param definition bean definition to inspect
+     * @return resolved bean type, or {@code null}
+     */
     private static Class<?> resolveBeanType(BeanDefinition definition) {
         if (definition instanceof AnnotatedBeanDefinition annotated && annotated.getFactoryMethodMetadata() != null) {
             var resolved = safeResolve(annotated.getFactoryMethodMetadata().getReturnTypeName());
@@ -165,6 +198,12 @@ public class CouchWeaveRepositoryConfigurationExtension extends RepositoryConfig
         return safeResolve(definition.getBeanClassName());
     }
 
+    /**
+     * Resolves a class name without propagating resolution failures.
+     *
+     * @param className class name to resolve
+     * @return resolved class, or {@code null}
+     */
     private static Class<?> safeResolve(String className) {
         if (className == null) {
             return null;
@@ -176,11 +215,21 @@ public class CouchWeaveRepositoryConfigurationExtension extends RepositoryConfig
         }
     }
 
+    /**
+     * Creates the default REST client builder definition.
+     *
+     * @return REST client builder bean definition
+     */
     private static org.springframework.beans.factory.support.AbstractBeanDefinition restClientBuilderDefinition() {
         return BeanDefinitionBuilder.rootBeanDefinition(RestClient.class, "builder")
                 .getBeanDefinition();
     }
 
+    /**
+     * Creates the default mapping context definition.
+     *
+     * @return mapping context bean definition
+     */
     private static org.springframework.beans.factory.support.AbstractBeanDefinition mappingContextDefinition() {
         return BeanDefinitionBuilder.genericBeanDefinition(CouchMappingContext.class)
                 .addConstructorArgValue(new RuntimeBeanReference(CouchDbClientSettings.class))
@@ -188,12 +237,22 @@ public class CouchWeaveRepositoryConfigurationExtension extends RepositoryConfig
                 .getBeanDefinition();
     }
 
+    /**
+     * Creates the default custom conversions definition.
+     *
+     * @return custom conversions bean definition
+     */
     private static org.springframework.beans.factory.support.AbstractBeanDefinition customConversionsDefinition() {
         return BeanDefinitionBuilder.genericBeanDefinition(CouchWeaveCustomConversions.class)
                 .addConstructorArgValue(List.of())
                 .getBeanDefinition();
     }
 
+    /**
+     * Creates the default converter definition.
+     *
+     * @return converter bean definition
+     */
     private static org.springframework.beans.factory.support.AbstractBeanDefinition converterDefinition() {
         return BeanDefinitionBuilder.genericBeanDefinition(MappingCouchWeaveConverter.class)
                 .addConstructorArgValue(new RuntimeBeanReference(CouchMappingContext.class))
@@ -201,6 +260,11 @@ public class CouchWeaveRepositoryConfigurationExtension extends RepositoryConfig
                 .getBeanDefinition();
     }
 
+    /**
+     * Creates the default operations definition.
+     *
+     * @return operations bean definition
+     */
     private static org.springframework.beans.factory.support.AbstractBeanDefinition operationsDefinition() {
         return BeanDefinitionBuilder.genericBeanDefinition(CouchWeaveTemplate.class)
                 .addConstructorArgValue(new RuntimeBeanReference(CouchDbClientSettings.class))
