@@ -45,7 +45,7 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: >-
-          ./mvnw -B -ntp verify
+          ./mvnw -B -ntp -T 1C verify
           org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
           -Dsonar.projectKey=marcelorodrigo_couchweave
 
