@@ -6,16 +6,16 @@ import org.springframework.data.repository.NoRepositoryBean;
 /**
  * Synchronous CRUD repository for CouchWeave documents.
  *
- * <p>{@code ID} must be exactly {@link String}; CouchWeave stores CouchDB document identifiers as
+ * <p>{@code I} must be exactly {@link String}; CouchWeave stores CouchDB document identifiers as
  * strings and rejects repositories using another identifier type during startup. Multi-document
  * operations are sequential and non-atomic: a failure stops subsequent work and no rollback or
  * retry is attempted.
  *
  * @param <T> the document type
- * @param <ID> the document identifier type, which must be {@code String}
+ * @param <I> the document identifier type, which must be {@code String}
  */
 @NoRepositoryBean
-public interface CouchWeaveRepository<T, ID> extends CrudRepository<T, ID> {
+public interface CouchWeaveRepository<T, I> extends CrudRepository<T, I> {
 
     /** Saves entities one at a time in input order; earlier writes remain after a later failure. */
     @Override
@@ -27,7 +27,7 @@ public interface CouchWeaveRepository<T, ID> extends CrudRepository<T, ID> {
 
     /** Returns matching entities in input order, including duplicates, and omits missing identifiers. */
     @Override
-    Iterable<T> findAllById(Iterable<ID> ids);
+    Iterable<T> findAllById(Iterable<I> ids);
 
     /** Counts documents with the exact mapped discriminator. */
     @Override
@@ -35,11 +35,11 @@ public interface CouchWeaveRepository<T, ID> extends CrudRepository<T, ID> {
 
     /** Deletes by reading the current CouchDB revision, without stale-snapshot detection. */
     @Override
-    void deleteById(ID id);
+    void deleteById(I id);
 
     /** Deletes each identifier sequentially using its current CouchDB revision. */
     @Override
-    void deleteAllById(Iterable<? extends ID> ids);
+    void deleteAllById(Iterable<? extends I> ids);
 
     /** Deletes entities sequentially using their revisions and detects stale snapshots. */
     @Override

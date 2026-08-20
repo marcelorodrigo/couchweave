@@ -8,9 +8,9 @@ import org.springframework.data.repository.core.EntityInformation;
  * Adapts CouchWeave persistent metadata to Spring Data repository metadata.
  *
  * @param <T> the document type
- * @param <ID> the document identifier type
+ * @param <I> the document identifier type
  */
-public class CouchWeaveEntityInformation<T, ID> implements EntityInformation<T, ID> {
+public class CouchWeaveEntityInformation<T, I> implements EntityInformation<T, I> {
 
     private final CouchPersistentEntity<T> entityMetadata;
 
@@ -28,15 +28,15 @@ public class CouchWeaveEntityInformation<T, ID> implements EntityInformation<T, 
     /** Reads the mapped identifier property from the entity. */
     @Override
     @SuppressWarnings("unchecked") // CouchWeave mapping requires String document identifiers.
-    public ID getId(T entity) {
-        return (ID) entityMetadata.getPropertyAccessor(entity).getProperty(entityMetadata.getRequiredIdProperty());
+    public I getId(T entity) {
+        return (I) entityMetadata.getPropertyAccessor(entity).getProperty(entityMetadata.getRequiredIdProperty());
     }
 
     /** Returns the required CouchDB identifier type. */
     @Override
     @SuppressWarnings("unchecked") // The repository factory validates this contract before use.
-    public Class<ID> getIdType() {
-        return (Class<ID>) String.class;
+    public Class<I> getIdType() {
+        return (Class<I>) String.class;
     }
 
     /** Returns the mapped Java domain type. */

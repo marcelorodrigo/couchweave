@@ -83,7 +83,8 @@ class CouchWeaveRepositoryIT {
         repository.save(new MutableBook(id, null, "Original"));
 
         // when / then
-        assertThatThrownBy(() -> repository.save(new MutableBook(id, null, "Replacement")))
+        var replacement = new MutableBook(id, null, "Replacement");
+        assertThatThrownBy(() -> repository.save(replacement))
                 .isInstanceOf(InvalidDataAccessApiUsageException.class);
     }
 
@@ -175,7 +176,8 @@ class CouchWeaveRepositoryIT {
         var failing = new MutableBook(blockerId, null, "Failing");
 
         // when / then
-        assertThatThrownBy(() -> repository.saveAll(List.of(first, second, failing)))
+        var books = List.of(first, second, failing);
+        assertThatThrownBy(() -> repository.saveAll(books))
                 .isInstanceOf(InvalidDataAccessApiUsageException.class);
         assertThat(repository.findById(first.id)).isPresent();
         assertThat(repository.findById(second.id)).isPresent();
@@ -261,7 +263,8 @@ class CouchWeaveRepositoryIT {
         var missing = new MutableBook("delete-missing-" + UUID.randomUUID(), "1-missing", "Missing");
 
         // when / then
-        assertThatThrownBy(() -> repository.deleteAll(List.of(valid, missing)))
+        var toDelete = List.of(valid, missing);
+        assertThatThrownBy(() -> repository.deleteAll(toDelete))
                 .isInstanceOf(CouchDbNotFoundException.class);
         assertThat(repository.existsById(valid.id)).isFalse();
     }

@@ -10,16 +10,16 @@ import java.util.Optional;
  * Sequential, non-atomic {@link CouchWeaveRepository} adapter over CouchWeave operations.
  *
  * @param <T> the document type
- * @param <ID> the document identifier type
+ * @param <I> the document identifier type
  */
-public class SimpleCouchWeaveRepository<T, ID> implements CouchWeaveRepository<T, ID> {
+public class SimpleCouchWeaveRepository<T, I> implements CouchWeaveRepository<T, I> {
 
     private final CouchWeaveOperations operations;
-    private final CouchWeaveEntityInformation<T, ID> entityInformation;
+    private final CouchWeaveEntityInformation<T, I> entityInformation;
 
     /** Creates a repository backed by explicit CouchWeave operations and entity metadata. */
     public SimpleCouchWeaveRepository(
-            CouchWeaveOperations operations, CouchWeaveEntityInformation<T, ID> entityInformation) {
+            CouchWeaveOperations operations, CouchWeaveEntityInformation<T, I> entityInformation) {
         this.operations = Objects.requireNonNull(operations, "operations must not be null");
         this.entityInformation = Objects.requireNonNull(entityInformation, "entityInformation must not be null");
     }
@@ -44,13 +44,13 @@ public class SimpleCouchWeaveRepository<T, ID> implements CouchWeaveRepository<T
 
     /** Finds one entity by its nonblank string identifier. */
     @Override
-    public Optional<T> findById(ID id) {
+    public Optional<T> findById(I id) {
         return operations.findById(asId(id), entityClass());
     }
 
     /** Checks one entity by its nonblank string identifier. */
     @Override
-    public boolean existsById(ID id) {
+    public boolean existsById(I id) {
         return operations.existsById(asId(id), entityClass());
     }
 
@@ -64,7 +64,7 @@ public class SimpleCouchWeaveRepository<T, ID> implements CouchWeaveRepository<T
 
     /** Finds identifiers sequentially, preserving order and duplicates while omitting misses. */
     @Override
-    public Iterable<T> findAllById(Iterable<ID> ids) {
+    public Iterable<T> findAllById(Iterable<I> ids) {
         requireNotNull(ids, "ids");
         var result = new ArrayList<T>();
         for (var id : ids) {
@@ -82,7 +82,7 @@ public class SimpleCouchWeaveRepository<T, ID> implements CouchWeaveRepository<T
 
     /** Deletes by current revision using a nonblank string identifier. */
     @Override
-    public void deleteById(ID id) {
+    public void deleteById(I id) {
         operations.deleteById(asId(id), entityClass());
     }
 
@@ -94,7 +94,7 @@ public class SimpleCouchWeaveRepository<T, ID> implements CouchWeaveRepository<T
 
     /** Deletes identifiers sequentially and stops at the first failure. */
     @Override
-    public void deleteAllById(Iterable<? extends ID> ids) {
+    public void deleteAllById(Iterable<? extends I> ids) {
         requireNotNull(ids, "ids");
         for (var id : ids) {
             requireNotNull(id, "id");
@@ -128,7 +128,7 @@ public class SimpleCouchWeaveRepository<T, ID> implements CouchWeaveRepository<T
         return entityInformation.getJavaType();
     }
 
-    private String asId(ID id) {
+    private String asId(I id) {
         if (!(id instanceof String value) || value.isBlank()) {
             throw new IllegalArgumentException("id must not be blank");
         }

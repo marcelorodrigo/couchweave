@@ -237,7 +237,8 @@ class SimpleCouchWeaveRepositoryTest {
     @Test
     @DisplayName("should reject null save all element")
     void shouldRejectNullSaveAllElement() {
-        assertThatThrownBy(() -> repository.saveAll(Arrays.asList(new Person("a"), null)))
+        var list = Arrays.asList(new Person("a"), null);
+        assertThatThrownBy(() -> repository.saveAll(list))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -250,7 +251,8 @@ class SimpleCouchWeaveRepositoryTest {
     @Test
     @DisplayName("should reject null find all by ID element")
     void shouldRejectNullFindAllByIdElement() {
-        assertThatThrownBy(() -> repository.findAllById(Arrays.asList("a", null)))
+        var ids = Arrays.asList("a", null);
+        assertThatThrownBy(() -> repository.findAllById(ids))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -263,7 +265,8 @@ class SimpleCouchWeaveRepositoryTest {
     @Test
     @DisplayName("should reject null delete all by ID element")
     void shouldRejectNullDeleteAllByIdElement() {
-        assertThatThrownBy(() -> repository.deleteAllById(Arrays.asList("a", null)))
+        var ids = Arrays.asList("a", null);
+        assertThatThrownBy(() -> repository.deleteAllById(ids))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -276,7 +279,8 @@ class SimpleCouchWeaveRepositoryTest {
     @Test
     @DisplayName("should reject null delete all element")
     void shouldRejectNullDeleteAllElement() {
-        assertThatThrownBy(() -> repository.deleteAll(Arrays.asList(new Person("a"), null)))
+        var list = Arrays.asList(new Person("a"), null);
+        assertThatThrownBy(() -> repository.deleteAll(list))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 

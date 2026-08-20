@@ -11,10 +11,10 @@ import org.springframework.data.repository.core.support.RepositoryFactoryBeanSup
  *
  * @param <T> the repository interface type
  * @param <S> the domain type managed by the repository
- * @param <ID> the document identifier type
+ * @param <I> the document identifier type
  */
-public class CouchWeaveRepositoryFactoryBean<T extends Repository<S, ID>, S, ID>
-        extends RepositoryFactoryBeanSupport<T, S, ID> {
+public class CouchWeaveRepositoryFactoryBean<T extends Repository<S, I>, S, I>
+        extends RepositoryFactoryBeanSupport<T, S, I> {
 
     private CouchWeaveOperations operations;
     private CouchMappingContext mappingContext;

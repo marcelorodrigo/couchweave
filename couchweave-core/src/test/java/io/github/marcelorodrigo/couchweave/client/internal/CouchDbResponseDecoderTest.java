@@ -75,51 +75,12 @@ class CouchDbResponseDecoderTest {
         assertThat(documents).isEmpty();
     }
 
-    @Test
-    @DisplayName("should reject an all documents response without rows")
-    void shouldRejectAnAllDocumentsResponseWithoutRows() {
+    @ParameterizedTest
+    @MethodSource("invalidAllDocuments")
+    @DisplayName("should reject malformed all documents responses")
+    void shouldRejectMalformedAllDocumentsResponses(String body) {
         // given
-        var response = response("{}");
-
-        // when / then
-        assertInvalidDocumentsResponse(response);
-    }
-
-    @Test
-    @DisplayName("should reject an all documents response when rows is not an array")
-    void shouldRejectAnAllDocumentsResponseWhenRowsIsNotAnArray() {
-        // given
-        var response = response("{\"rows\":{}}");
-
-        // when / then
-        assertInvalidDocumentsResponse(response);
-    }
-
-    @Test
-    @DisplayName("should reject an all documents response when a row is not an object")
-    void shouldRejectAnAllDocumentsResponseWhenARowIsNotAnObject() {
-        // given
-        var response = response("{\"rows\":[null]}");
-
-        // when / then
-        assertInvalidDocumentsResponse(response);
-    }
-
-    @Test
-    @DisplayName("should reject an all documents response when a row has no document")
-    void shouldRejectAnAllDocumentsResponseWhenARowHasNoDocument() {
-        // given
-        var response = response("{\"rows\":[{}]}");
-
-        // when / then
-        assertInvalidDocumentsResponse(response);
-    }
-
-    @Test
-    @DisplayName("should reject an all documents response when a document is not an object")
-    void shouldRejectAnAllDocumentsResponseWhenADocumentIsNotAnObject() {
-        // given
-        var response = response("{\"rows\":[{\"doc\":[]}]}");
+        var response = response(body);
 
         // when / then
         assertInvalidDocumentsResponse(response);
@@ -170,6 +131,15 @@ class CouchDbResponseDecoderTest {
                 Arguments.of("[]"),
                 Arguments.of("{\"_rev\":\"1-abc\"}"),
                 Arguments.of("{\"_id\":\"book-42\"}"));
+    }
+
+    private static Stream<Arguments> invalidAllDocuments() {
+        return Stream.of(
+                Arguments.of("{}"),
+                Arguments.of("{\"rows\":{}}"),
+                Arguments.of("{\"rows\":[null]}"),
+                Arguments.of("{\"rows\":[{}]}"),
+                Arguments.of("{\"rows\":[{\"doc\":[]}]}"));
     }
 
     private static Stream<Arguments> invalidWriteResults() {

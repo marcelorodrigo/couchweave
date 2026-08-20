@@ -61,7 +61,7 @@ public class CouchWeaveRepositoryFactory extends RepositoryFactorySupport {
 
     /** Returns entity information backed by the resolved CouchWeave mapping. */
     @Override
-    public <T, ID> EntityInformation<T, ID> getEntityInformation(Class<T> domainClass) {
+    public <T, I> EntityInformation<T, I> getEntityInformation(Class<T> domainClass) {
         return new CouchWeaveEntityInformation<>(entity(domainClass));
     }
 
