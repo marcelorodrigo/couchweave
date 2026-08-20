@@ -15,6 +15,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.repository.core.support.RepositoryComposition.RepositoryFragments;
+import org.springframework.data.repository.core.support.RepositoryFragment;
 
 class CouchWeaveRepositoryContextTest {
     @Test
@@ -24,7 +26,7 @@ class CouchWeaveRepositoryContextTest {
         var operations = mock(CouchWeaveOperations.class);
         var person = new Person("p1");
         when(operations.findById("p1", Person.class)).thenReturn(Optional.of(person));
-        try (var context = context(operations, PersonRepository.class)) {
+        try (var context = context(operations, PersonRepository.class, RepositoryFragments.empty())) {
             context.refresh();
             // when
             var repository = context.getBean(PersonRepository.class);
@@ -37,22 +39,39 @@ class CouchWeaveRepositoryContextTest {
     }
 
     @Test
+    @DisplayName("should compose custom repository fragments with standard CRUD")
+    void shouldComposeCustomFragmentWithCrud() {
+        // given
+        var operations = mock(CouchWeaveOperations.class);
+        var person = new Person("p1");
+        when(operations.findById("p1", Person.class)).thenReturn(Optional.of(person));
+        var fragments = RepositoryFragments.of(RepositoryFragment.implemented(new CustomFragmentImpl()));
+        try (var context = context(operations, PersonFragmentRepository.class, fragments)) {
+            context.refresh();
+            // when
+            var repository = context.getBean(PersonFragmentRepository.class);
+            var greeting = repository.greet("neo");
+            repository.findById("p1");
+            // then
+            assertThat(greeting).isEqualTo("custom:neo");
+            verify(operations).findById("p1", Person.class);
+        }
+    }
+
+    @Test
     @DisplayName("should fail startup for non-string ID repository")
     void shouldFailStartupForNonStringIdRepository() {
         // given
         var operations = mock(CouchWeaveOperations.class);
-        var context = context(operations, LongIdRepository.class);
+        var context = context(operations, LongIdRepository.class, RepositoryFragments.empty());
         // when
         // then
-        try {
-            assertThatThrownBy(context::refresh).hasCauseInstanceOf(CouchWeaveRepositoryConfigurationException.class);
-        } finally {
-            context.close();
-        }
+        assertThatThrownBy(context::refresh).hasCauseInstanceOf(CouchWeaveRepositoryConfigurationException.class);
+        context.close();
     }
 
     private static AnnotationConfigApplicationContext context(
-            CouchWeaveOperations operations, Class<?> repositoryType) {
+            CouchWeaveOperations operations, Class<?> repositoryType, RepositoryFragments fragments) {
         var context = new AnnotationConfigApplicationContext();
         var mappingContext = new CouchMappingContext("db");
         mappingContext.setInitialEntitySet(java.util.Set.of(Person.class));
@@ -62,17 +81,22 @@ class CouchWeaveRepositoryContextTest {
         context.registerBean(
                 "repositoryFactory",
                 TestFactoryBean.class,
-                () -> new TestFactoryBean(repositoryType, operations, mappingContext));
+                () -> new TestFactoryBean(repositoryType, operations, mappingContext, fragments));
         return context;
     }
 
     static class TestFactoryBean
             extends CouchWeaveRepositoryFactoryBean<
                     org.springframework.data.repository.Repository<Object, Object>, Object, Object> {
-        TestFactoryBean(Class<?> repositoryType, CouchWeaveOperations operations, CouchMappingContext mappingContext) {
+        TestFactoryBean(
+                Class<?> repositoryType,
+                CouchWeaveOperations operations,
+                CouchMappingContext mappingContext,
+                RepositoryFragments fragments) {
             super(repositoryInterface(repositoryType));
             setOperations(operations);
             setMappingContext(mappingContext);
+            setRepositoryFragments(fragments);
         }
 
         @SuppressWarnings("unchecked")
@@ -94,7 +118,20 @@ class CouchWeaveRepositoryContextTest {
         }
     }
 
+    interface CustomFragment {
+        String greet(String name);
+    }
+
+    static class CustomFragmentImpl implements CustomFragment {
+        @Override
+        public String greet(String name) {
+            return "custom:" + name;
+        }
+    }
+
     interface PersonRepository extends CouchWeaveRepository<Person, String> {}
+
+    interface PersonFragmentRepository extends CouchWeaveRepository<Person, String>, CustomFragment {}
 
     interface LongIdRepository extends CouchWeaveRepository<Person, Long> {}
 }
