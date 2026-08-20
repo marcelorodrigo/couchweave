@@ -14,10 +14,16 @@ import java.util.Optional;
  */
 public class SimpleCouchWeaveRepository<T, I> implements CouchWeaveRepository<T, I> {
 
+    /** The CouchWeave operations used to persist and read documents. */
     private final CouchWeaveOperations operations;
+    /** The entity metadata describing the mapped document type. */
     private final CouchWeaveEntityInformation<T, I> entityInformation;
 
-    /** Creates a repository backed by explicit CouchWeave operations and entity metadata. */
+    /** Creates a repository backed by explicit CouchWeave operations and entity metadata.
+     *
+     * @param operations the CouchWeave operations
+     * @param entityInformation the entity metadata
+     */
     public SimpleCouchWeaveRepository(
             CouchWeaveOperations operations, CouchWeaveEntityInformation<T, I> entityInformation) {
         this.operations = Objects.requireNonNull(operations, "operations must not be null");
@@ -118,16 +124,19 @@ public class SimpleCouchWeaveRepository<T, I> implements CouchWeaveRepository<T,
         deleteAll(findAll());
     }
 
+    /** Throws {@link IllegalArgumentException} when the given value is null. */
     private static void requireNotNull(Object value, String name) {
         if (value == null) {
             throw new IllegalArgumentException(name + " must not be null");
         }
     }
 
+    /** Returns the document type handled by this repository. */
     private Class<T> entityClass() {
         return entityInformation.getJavaType();
     }
 
+    /** Coerces the repository identifier to a nonblank string key. */
     private String asId(I id) {
         if (!(id instanceof String value) || value.isBlank()) {
             throw new IllegalArgumentException("id must not be blank");
