@@ -15,8 +15,8 @@ importers:
         specifier: 0.5.20
         version: 0.5.20(tailwindcss@4.3.3)
       html-validate:
-        specifier: 11.6.2
-        version: 11.6.2
+        specifier: 11.7.0
+        version: 11.7.0
       tailwindcss:
         specifier: 4.3.3
         version: 4.3.3
@@ -273,8 +273,8 @@ packages:
   graceful-fs@4.2.11:
     resolution: {integrity: sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ==}
 
-  html-validate@11.6.2:
-    resolution: {integrity: sha512-dlAAEeWOOdv9ya/n3pdSFTzzzGlrw+ZI43J/39zBgCSqzSg24lyqrouuBP9MEkSFAtXVZm64F35mlL7m43jCNA==}
+  html-validate@11.7.0:
+    resolution: {integrity: sha512-xsXD89NYNDneZOBwjUWGkoeBBgVdM0z74t72NRMaf0YpZRBRbDLoCpIWba3YfT3LAB2NZAM1T6MXS7Vlr8ixcw==}
     engines: {node: ^22.22.0 || >= 24.8.0}
     hasBin: true
     peerDependencies:
@@ -650,7 +650,7 @@ snapshots:
 
   graceful-fs@4.2.11: {}
 
-  html-validate@11.6.2:
+  html-validate@11.7.0:
     dependencies:
       '@html-validate/stylish': 6.0.0
       '@sidvind/better-ajv-errors': 7.0.0(ajv@8.20.0)
