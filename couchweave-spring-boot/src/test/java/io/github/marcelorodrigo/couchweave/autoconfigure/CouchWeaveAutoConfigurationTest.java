@@ -1,6 +1,7 @@
 package io.github.marcelorodrigo.couchweave.autoconfigure;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 import io.github.marcelorodrigo.couchweave.CouchWeaveOperations;
 import io.github.marcelorodrigo.couchweave.CouchWeaveTemplate;
@@ -123,11 +124,66 @@ class CouchWeaveAutoConfigurationTest {
         var resource = new ClassPathResource(
                 "META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports");
         assertThat(resource.exists()).isTrue();
-        var content = StreamUtils.copyToString(resource.getInputStream(), StandardCharsets.UTF_8);
-        assertThat(content).contains(CouchWeaveClientAutoConfiguration.class.getName());
-        assertThat(content).contains(CouchWeaveMappingAutoConfiguration.class.getName());
-        assertThat(content).contains(CouchWeaveOperationsAutoConfiguration.class.getName());
-        assertThat(content).contains(CouchWeaveRepositoriesAutoConfiguration.class.getName());
+        String content;
+        try (var in = resource.getInputStream()) {
+            content = StreamUtils.copyToString(in, StandardCharsets.UTF_8);
+        }
+        assertThat(content)
+                .contains(CouchWeaveClientAutoConfiguration.class.getName())
+                .contains(CouchWeaveMappingAutoConfiguration.class.getName())
+                .contains(CouchWeaveOperationsAutoConfiguration.class.getName())
+                .contains(CouchWeaveRepositoriesAutoConfiguration.class.getName());
+    }
+
+    @Test
+    @DisplayName("should back off when RestClient is absent")
+    void shouldBackOffWhenRestClientAbsent() {
+        new ApplicationContextRunner()
+                .withConfiguration(AutoConfigurations.of(
+                        CouchWeaveClientAutoConfiguration.class,
+                        CouchWeaveMappingAutoConfiguration.class,
+                        CouchWeaveOperationsAutoConfiguration.class))
+                .withPropertyValues(
+                        "spring.data.couchweave.server-uri=http://localhost:5984",
+                        "spring.data.couchweave.database=couchweave_test")
+                .withClassLoader(new FilteredClassLoader(RestClient.class))
+                .run(context -> {
+                    assertThat(context).doesNotHaveBean(CouchDbClientSettings.class);
+                    assertThat(context).doesNotHaveBean(CouchWeaveOperations.class);
+                });
+    }
+
+    @Test
+    @DisplayName("should back off when the client settings class is absent")
+    void shouldBackOffWhenClientSettingsClassAbsent() {
+        new ApplicationContextRunner()
+                .withConfiguration(AutoConfigurations.of(
+                        CouchWeaveClientAutoConfiguration.class,
+                        CouchWeaveMappingAutoConfiguration.class,
+                        CouchWeaveOperationsAutoConfiguration.class))
+                .withPropertyValues(
+                        "spring.data.couchweave.server-uri=http://localhost:5984",
+                        "spring.data.couchweave.database=couchweave_test")
+                .withClassLoader(new FilteredClassLoader(CouchDbClientSettings.class))
+                .run(context -> {
+                    assertThat(context).doesNotHaveBean(CouchDbClientSettings.class);
+                    assertThat(context).doesNotHaveBean(CouchWeaveOperations.class);
+                });
+    }
+
+    @Test
+    @DisplayName("should back off when the converter type is absent")
+    void shouldBackOffWhenConverterAbsent() {
+        new ApplicationContextRunner()
+                .withConfiguration(AutoConfigurations.of(
+                        CouchWeaveClientAutoConfiguration.class,
+                        CouchWeaveMappingAutoConfiguration.class,
+                        CouchWeaveOperationsAutoConfiguration.class))
+                .withPropertyValues(
+                        "spring.data.couchweave.server-uri=http://localhost:5984",
+                        "spring.data.couchweave.database=couchweave_test")
+                .withClassLoader(new FilteredClassLoader(CouchWeaveConverter.class))
+                .run(context -> assertThat(context).doesNotHaveBean(CouchWeaveOperations.class));
     }
 
     static class CustomSettingsConfig {
@@ -169,7 +225,7 @@ class CouchWeaveAutoConfigurationTest {
     }
 
     static class CustomOperationsConfig {
-        static final CouchWeaveOperations operations = org.mockito.Mockito.mock(CouchWeaveOperations.class);
+        static final CouchWeaveOperations operations = mock(CouchWeaveOperations.class);
 
         @Bean
         CouchWeaveOperations couchWeaveOperations() {

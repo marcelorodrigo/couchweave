@@ -1,6 +1,7 @@
 package io.github.marcelorodrigo.couchweave.autoconfigure;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 import io.github.marcelorodrigo.couchweave.CouchWeaveOperations;
 import io.github.marcelorodrigo.couchweave.autoconfigure.excluded.ExcludedRepository;
@@ -82,7 +83,7 @@ class CouchWeaveRepositoriesAutoConfigurationTest {
 
         @Bean
         CouchWeaveOperations couchWeaveOperations() {
-            return org.mockito.Mockito.mock(CouchWeaveOperations.class);
+            return mock(CouchWeaveOperations.class);
         }
     }
 }
