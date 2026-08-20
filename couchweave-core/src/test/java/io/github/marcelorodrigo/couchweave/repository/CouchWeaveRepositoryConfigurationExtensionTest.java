@@ -66,6 +66,16 @@ class CouchWeaveRepositoryConfigurationExtensionTest {
     }
 
     @Test
+    @DisplayName("should identify CouchWeave repository as strict candidate")
+    void shouldIdentifyCouchWeaveRepositoryAsStrictCandidate() {
+        // given
+        // when
+        var result = extension.strict(new DefaultRepositoryMetadata(CouchRepo.class));
+        // then
+        assertThat(result).isTrue();
+    }
+
+    @Test
     @DisplayName("should wire the mapping context property reference")
     void shouldWireMappingContextPropertyReference() {
         // given
