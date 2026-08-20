@@ -11,6 +11,7 @@ import io.github.marcelorodrigo.couchweave.CouchWeaveTemplate;
 import io.github.marcelorodrigo.couchweave.client.CouchDbClientSettings;
 import io.github.marcelorodrigo.couchweave.mapping.CouchDocument;
 import io.github.marcelorodrigo.couchweave.mapping.CouchMappingContext;
+import io.github.marcelorodrigo.couchweave.mapping.CouchWeaveConverter;
 import io.github.marcelorodrigo.couchweave.mapping.CouchWeaveCustomConversions;
 import io.github.marcelorodrigo.couchweave.mapping.MappingCouchWeaveConverter;
 import io.github.marcelorodrigo.couchweave.repository.CouchWeaveRepository;
@@ -19,6 +20,7 @@ import java.lang.reflect.Proxy;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -39,6 +41,7 @@ class CouchWeaveRepositoryEnablementTest {
         try (var context = context(DefaultStackConfig.class)) {
             // when / then
             assertThat(context.getBean(CouchMappingContext.class)).isNotNull();
+            assertThat(context.getBean(CouchMappingContext.class).isStrict()).isFalse();
             assertThat(context.getBean(CouchWeaveCustomConversions.class)).isNotNull();
             assertThat(context.getBean(MappingCouchWeaveConverter.class)).isNotNull();
             assertThat(context.getBean(RestClient.Builder.class)).isNotNull();
@@ -78,12 +81,13 @@ class CouchWeaveRepositoryEnablementTest {
     }
 
     @Test
-    @DisplayName("should honor a custom mapping context override")
+    @DisplayName("should honor a custom mapping context override and preserve its strictness")
     void shouldUseCustomMappingContext() {
         // given
         try (var context = context(WithCustomMappingConfig.class)) {
             // when / then
             assertThat(context.getBean(CouchMappingContext.class)).isSameAs(CustomMappingHolder.mappingContext);
+            assertThat(context.getBean(CouchMappingContext.class).isStrict()).isTrue();
         }
     }
 
@@ -95,6 +99,56 @@ class CouchWeaveRepositoryEnablementTest {
             // when / then
             assertThat(context.getBean(CouchWeaveCustomConversions.class))
                     .isSameAs(CustomConversionsHolder.conversions);
+        }
+    }
+
+    @Test
+    @DisplayName("should honor a custom REST client builder supplied through a FactoryBean")
+    void shouldUseCustomBuilderFromFactoryBean() {
+        // given
+        try (var context = context(WithBuilderFactoryBeanConfig.class)) {
+            // when / then
+            assertThat(context.getBean(RestClient.Builder.class)).isSameAs(BuilderFactoryBean.product);
+        }
+    }
+
+    @Test
+    @DisplayName("should honor a custom mapping context supplied through a FactoryBean")
+    void shouldUseMappingContextFromFactoryBean() {
+        // given
+        try (var context = context(WithMappingFactoryBeanConfig.class)) {
+            // when / then
+            assertThat(context.getBean(CouchMappingContext.class)).isSameAs(MappingFactoryBean.product);
+        }
+    }
+
+    @Test
+    @DisplayName("should honor a custom conversions supplied through a FactoryBean")
+    void shouldUseConversionsFromFactoryBean() {
+        // given
+        try (var context = context(WithConversionsFactoryBeanConfig.class)) {
+            // when / then
+            assertThat(context.getBean(CouchWeaveCustomConversions.class)).isSameAs(ConversionsFactoryBean.product);
+        }
+    }
+
+    @Test
+    @DisplayName("should honor a custom converter supplied through a FactoryBean")
+    void shouldUseConverterFromFactoryBean() {
+        // given
+        try (var context = context(WithConverterFactoryBeanConfig.class)) {
+            // when / then
+            assertThat(context.getBean(CouchWeaveConverter.class)).isSameAs(ConverterFactoryBean.product);
+        }
+    }
+
+    @Test
+    @DisplayName("should honor a custom operations supplied through a FactoryBean")
+    void shouldUseOperationsFromFactoryBean() {
+        // given
+        try (var context = context(WithOperationsFactoryBeanConfig.class)) {
+            // when / then
+            assertThat(context.getBean(CouchWeaveOperations.class)).isSameAs(OperationsFactoryBean.product);
         }
     }
 
@@ -308,6 +362,87 @@ class CouchWeaveRepositoryEnablementTest {
     @EnableCouchWeaveRepositories(
             basePackageClasses = CouchWeaveRepositoryEnablementTest.class,
             considerNestedRepositories = true)
+    static class WithBuilderFactoryBeanConfig {
+        @Bean
+        CouchDbClientSettings couchDbClientSettings() {
+            return settings();
+        }
+
+        @Bean
+        FactoryBean<RestClient.Builder> couchWeaveRestClientBuilder() {
+            return BuilderFactoryBean.factoryBean();
+        }
+    }
+
+    @Configuration
+    @EnableCouchWeaveRepositories(
+            basePackageClasses = CouchWeaveRepositoryEnablementTest.class,
+            considerNestedRepositories = true)
+    static class WithMappingFactoryBeanConfig {
+        @Bean
+        CouchDbClientSettings couchDbClientSettings() {
+            return settings();
+        }
+
+        @Bean
+        FactoryBean<CouchMappingContext> couchMappingContext() {
+            return MappingFactoryBean.factoryBean();
+        }
+    }
+
+    @Configuration
+    @EnableCouchWeaveRepositories(
+            basePackageClasses = CouchWeaveRepositoryEnablementTest.class,
+            considerNestedRepositories = true)
+    static class WithConversionsFactoryBeanConfig {
+        @Bean
+        CouchDbClientSettings couchDbClientSettings() {
+            return settings();
+        }
+
+        @Bean
+        FactoryBean<CouchWeaveCustomConversions> couchWeaveCustomConversions() {
+            return ConversionsFactoryBean.factoryBean();
+        }
+    }
+
+    @Configuration
+    @EnableCouchWeaveRepositories(
+            basePackageClasses = CouchWeaveRepositoryEnablementTest.class,
+            considerNestedRepositories = true)
+    static class WithConverterFactoryBeanConfig {
+        @Bean
+        CouchDbClientSettings couchDbClientSettings() {
+            return settings();
+        }
+
+        @Bean
+        FactoryBean<CouchWeaveConverter> couchWeaveConverter(
+                CouchMappingContext mappingContext, CouchWeaveCustomConversions customConversions) {
+            return ConverterFactoryBean.factoryBean(mappingContext, customConversions);
+        }
+    }
+
+    @Configuration
+    @EnableCouchWeaveRepositories(
+            basePackageClasses = CouchWeaveRepositoryEnablementTest.class,
+            considerNestedRepositories = true)
+    static class WithOperationsFactoryBeanConfig {
+        @Bean
+        CouchDbClientSettings couchDbClientSettings() {
+            return settings();
+        }
+
+        @Bean
+        FactoryBean<CouchWeaveOperations> couchWeaveOperations() {
+            return OperationsFactoryBean.factoryBean();
+        }
+    }
+
+    @Configuration
+    @EnableCouchWeaveRepositories(
+            basePackageClasses = CouchWeaveRepositoryEnablementTest.class,
+            considerNestedRepositories = true)
     static class MissingSettingsConfig {}
 
     @Configuration
@@ -485,11 +620,85 @@ class CouchWeaveRepositoryEnablementTest {
     }
 
     static final class CustomMappingHolder {
-        static final CouchMappingContext mappingContext = new CouchMappingContext("custom_db", false);
+        static final CouchMappingContext mappingContext = createStrictMapping();
+
+        private static CouchMappingContext createStrictMapping() {
+            var context = new CouchMappingContext("custom_db", true);
+            context.setInitialEntitySet(java.util.Set.of(Person.class));
+            context.initialize();
+            return context;
+        }
     }
 
     static final class CustomConversionsHolder {
         static final CouchWeaveCustomConversions conversions = new CouchWeaveCustomConversions(java.util.List.of());
+    }
+
+    static final class InstanceFactoryBean<T> implements FactoryBean<T> {
+        private final T instance;
+        private final Class<T> objectType;
+
+        InstanceFactoryBean(T instance, Class<T> objectType) {
+            this.instance = instance;
+            this.objectType = objectType;
+        }
+
+        @Override
+        public T getObject() {
+            return instance;
+        }
+
+        @Override
+        public Class<?> getObjectType() {
+            return objectType;
+        }
+
+        @Override
+        public boolean isSingleton() {
+            return true;
+        }
+    }
+
+    static final class BuilderFactoryBean {
+        static final RestClient.Builder product = RestClient.builder();
+
+        static FactoryBean<RestClient.Builder> factoryBean() {
+            return new InstanceFactoryBean<>(product, RestClient.Builder.class);
+        }
+    }
+
+    static final class MappingFactoryBean {
+        static final CouchMappingContext product = new CouchMappingContext("factory_db", false);
+
+        static FactoryBean<CouchMappingContext> factoryBean() {
+            return new InstanceFactoryBean<>(product, CouchMappingContext.class);
+        }
+    }
+
+    static final class ConversionsFactoryBean {
+        static final CouchWeaveCustomConversions product = new CouchWeaveCustomConversions(java.util.List.of());
+
+        static FactoryBean<CouchWeaveCustomConversions> factoryBean() {
+            return new InstanceFactoryBean<>(product, CouchWeaveCustomConversions.class);
+        }
+    }
+
+    static final class ConverterFactoryBean {
+        static CouchWeaveConverter product;
+
+        static FactoryBean<CouchWeaveConverter> factoryBean(
+                CouchMappingContext mappingContext, CouchWeaveCustomConversions customConversions) {
+            product = new MappingCouchWeaveConverter(mappingContext, customConversions);
+            return new InstanceFactoryBean<>(product, CouchWeaveConverter.class);
+        }
+    }
+
+    static final class OperationsFactoryBean {
+        static final CouchWeaveOperations product = mock(CouchWeaveOperations.class);
+
+        static FactoryBean<CouchWeaveOperations> factoryBean() {
+            return new InstanceFactoryBean<>(product, CouchWeaveOperations.class);
+        }
     }
 
     @CouchDocument

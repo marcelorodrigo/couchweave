@@ -14,10 +14,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
+import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.RuntimeBeanReference;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
+import org.springframework.core.ResolvableType;
 import org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport;
 import org.springframework.data.repository.config.RepositoryConfigurationSource;
 import org.springframework.data.repository.core.RepositoryMetadata;
@@ -117,12 +119,40 @@ public class CouchWeaveRepositoryConfigurationExtension extends RepositoryConfig
 
     private static boolean containsBeanOfType(Class<?> type, BeanDefinitionRegistry registry) {
         for (var beanName : registry.getBeanDefinitionNames()) {
-            var resolved = resolveBeanType(registry.getBeanDefinition(beanName));
-            if (resolved != null && type.isAssignableFrom(resolved)) {
+            if (providesType(registry.getBeanDefinition(beanName), type)) {
                 return true;
             }
         }
         return false;
+    }
+
+    private static boolean providesType(BeanDefinition definition, Class<?> type) {
+        var candidate = resolveBeanType(definition);
+        if (candidate != null && type.isAssignableFrom(candidate)) {
+            return true;
+        }
+        // A FactoryBean is registered under its own type, so the product type must be resolved
+        // from the definition attribute (populated from FactoryBean#getObjectType()) or the
+        // FactoryBean generic, otherwise the default infrastructure would be registered twice.
+        if (candidate != null && FactoryBean.class.isAssignableFrom(candidate)) {
+            var product = resolveFactoryBeanObjectType(definition, candidate);
+            return product != null && type.isAssignableFrom(product);
+        }
+        return false;
+    }
+
+    private static Class<?> resolveFactoryBeanObjectType(BeanDefinition definition, Class<?> factoryBeanType) {
+        var attribute = definition.getAttribute(FactoryBean.OBJECT_TYPE_ATTRIBUTE);
+        if (attribute instanceof Class<?> clazz) {
+            return clazz;
+        }
+        if (attribute instanceof String className) {
+            var resolved = safeResolve(className);
+            if (resolved != null) {
+                return resolved;
+            }
+        }
+        return ResolvableType.forClass(factoryBeanType).as(FactoryBean.class).getGeneric(0).resolve();
     }
 
     private static Class<?> resolveBeanType(BeanDefinition definition) {

@@ -18,6 +18,7 @@ public final class CouchMappingContext
         extends AbstractMappingContext<CouchPersistentEntity<?>, CouchPersistentProperty> {
 
     private final String defaultDatabase;
+    private final boolean strict;
     private final ConcurrentMap<String, Class<?>> discriminatorTypes = new ConcurrentHashMap<>();
 
     /**
@@ -37,10 +38,10 @@ public final class CouchMappingContext
      *
      * @param settings validated CouchDB connection settings whose database becomes the fallback
      * @param strict when {@code true}, unknown types are rejected instead of being created lazily
-     * @throws IllegalArgumentException when {@code settings} is {@code null} or its database is blank
+     * @throws IllegalArgumentException when {@code settings} is {@code null}
      */
     public CouchMappingContext(CouchDbClientSettings settings, boolean strict) {
-        this(settings == null ? null : settings.database(), strict);
+        this(databaseOf(settings), strict);
     }
 
     /**
@@ -55,12 +56,25 @@ public final class CouchMappingContext
      * @param strict when {@code true}, unknown types are rejected instead of being created lazily
      * @throws IllegalArgumentException when {@code defaultDatabase} is {@code null} or blank
      */
+    private static String databaseOf(CouchDbClientSettings settings) {
+        if (settings == null) {
+            throw new IllegalArgumentException("settings must not be null");
+        }
+        return settings.database();
+    }
+
     public CouchMappingContext(String defaultDatabase, boolean strict) {
         if (defaultDatabase == null || defaultDatabase.isBlank()) {
             throw new IllegalArgumentException("defaultDatabase must not be blank");
         }
         this.defaultDatabase = defaultDatabase;
+        this.strict = strict;
         setStrict(strict);
+    }
+
+    /** Returns whether unknown types are rejected instead of being created lazily. */
+    public boolean isStrict() {
+        return strict;
     }
 
     @Override
