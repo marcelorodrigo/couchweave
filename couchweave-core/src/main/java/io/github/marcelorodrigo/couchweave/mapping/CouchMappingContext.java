@@ -1,5 +1,6 @@
 package io.github.marcelorodrigo.couchweave.mapping;
 
+import io.github.marcelorodrigo.couchweave.client.CouchDbClientSettings;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -22,15 +23,44 @@ public final class CouchMappingContext
     /**
      * Creates an empty mapping context using the supplied fallback database.
      *
+     * <p>The context is strict: unknown types are rejected rather than created lazily.
+     *
      * @param defaultDatabase the nonblank database used by documents without an override
      * @throws IllegalArgumentException when {@code defaultDatabase} is {@code null} or blank
      */
     public CouchMappingContext(String defaultDatabase) {
+        this(defaultDatabase, true);
+    }
+
+    /**
+     * Creates an empty mapping context using the database of the supplied settings as the fallback.
+     *
+     * @param settings validated CouchDB connection settings whose database becomes the fallback
+     * @param strict when {@code true}, unknown types are rejected instead of being created lazily
+     * @throws IllegalArgumentException when {@code settings} is {@code null} or its database is blank
+     */
+    public CouchMappingContext(CouchDbClientSettings settings, boolean strict) {
+        this(settings == null ? null : settings.database(), strict);
+    }
+
+    /**
+     * Creates an empty mapping context using the supplied fallback database.
+     *
+     * <p>A non-strict context lazily creates persistent entities for annotated document types
+     * on first access, which lets repository infrastructure resolve domain types discovered
+     * during scanning. Strict contexts require every entity to be registered before
+     * initialization and reject unknown types.
+     *
+     * @param defaultDatabase the nonblank database used by documents without an override
+     * @param strict when {@code true}, unknown types are rejected instead of being created lazily
+     * @throws IllegalArgumentException when {@code defaultDatabase} is {@code null} or blank
+     */
+    public CouchMappingContext(String defaultDatabase, boolean strict) {
         if (defaultDatabase == null || defaultDatabase.isBlank()) {
             throw new IllegalArgumentException("defaultDatabase must not be blank");
         }
         this.defaultDatabase = defaultDatabase;
-        setStrict(true);
+        setStrict(strict);
     }
 
     @Override

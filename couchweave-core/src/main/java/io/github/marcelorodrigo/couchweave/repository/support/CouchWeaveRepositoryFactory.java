@@ -66,14 +66,16 @@ public class CouchWeaveRepositoryFactory extends RepositoryFactorySupport {
     }
 
     private <T> CouchPersistentEntity<T> entity(Class<T> domainClass) {
-        if (!mappingContext.hasPersistentEntityFor(domainClass)) {
+        // A non-strict mapping context lazily creates the entity for annotated document types,
+        // which is required when repository domain types are discovered during scanning.
+        var persistentEntity = mappingContext.getPersistentEntity(domainClass);
+        if (persistentEntity == null) {
             throw new CouchWeaveRepositoryConfigurationException(
                     "CouchWeave domain type '%s' has no valid @CouchDocument mapping registered."
                             .formatted(domainClass.getName()));
         }
-        // The mapping context resolves the entity for the requested domain class.
         @SuppressWarnings("unchecked")
-        var entity = (CouchPersistentEntity<T>) mappingContext.getRequiredPersistentEntity(domainClass);
+        var entity = (CouchPersistentEntity<T>) persistentEntity;
         return entity;
     }
 }

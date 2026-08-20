@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Optional;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
+import org.springframework.web.client.RestClient;
 import tools.jackson.databind.JsonNode;
 
 /**
@@ -35,6 +36,26 @@ public final class CouchWeaveTemplate implements CouchWeaveOperations {
      */
     public CouchWeaveTemplate(CouchDbClientSettings settings, CouchWeaveConverter converter) {
         this(CouchDbClient.create(Objects.requireNonNull(settings, "settings must not be null")), converter);
+    }
+
+    /**
+     * Creates a template backed by a caller-configured REST client builder.
+     *
+     * <p>The settings still determine the server URI, JSON accept header, and basic authentication,
+     * but the transport, timeouts, and other builder configuration are preserved so applications can
+     * customize the HTTP layer.
+     *
+     * @param settings validated CouchDB connection settings
+     * @param restClientBuilder caller-configured REST client builder
+     * @param converter entity/document converter and mapping metadata provider
+     */
+    public CouchWeaveTemplate(
+            CouchDbClientSettings settings, RestClient.Builder restClientBuilder, CouchWeaveConverter converter) {
+        this(
+                CouchDbClient.create(
+                        Objects.requireNonNull(settings, "settings must not be null"),
+                        Objects.requireNonNull(restClientBuilder, "restClientBuilder must not be null")),
+                converter);
     }
 
     /**

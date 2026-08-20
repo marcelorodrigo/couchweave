@@ -40,6 +40,17 @@ public final class MappingCouchWeaveConverter implements CouchWeaveConverter {
         this.conversionService = customConversions.getConversionService();
     }
 
+    /**
+     * Creates a converter with a default Jackson mapper.
+     *
+     * @param mappingContext the initialized CouchWeave mapping context
+     * @param customConversions the property conversion registry
+     */
+    public MappingCouchWeaveConverter(
+            CouchMappingContext mappingContext, CouchWeaveCustomConversions customConversions) {
+        this(mappingContext, new ObjectMapper(), customConversions);
+    }
+
     @Override
     public ObjectNode write(Object source) {
         if (source == null) {
