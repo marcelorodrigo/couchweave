@@ -22,9 +22,8 @@ class CouchWeaveRepositoryFactoryTest {
     @DisplayName("should return simple CouchWeave repository as base class")
     void shouldReturnSimpleCouchWeaveRepositoryAsBaseClass() {
         // given
-        var factory = factory();
         // when
-        var result = factoryBase(factory, ValidRepo.class);
+        var result = factoryBase(ValidRepo.class);
         // then
         assertThat(result).isEqualTo(SimpleCouchWeaveRepository.class);
     }
@@ -38,7 +37,7 @@ class CouchWeaveRepositoryFactoryTest {
         // then
         assertThatThrownBy(() -> factory.getRepository(LongRepo.class))
                 .isInstanceOf(CouchWeaveRepositoryConfigurationException.class)
-                .hasMessageContaining("LongRepo", "Person", "java.lang.String");
+                .hasMessageContainingAll("LongRepo", "Person", "java.lang.String");
     }
 
     @Test
@@ -79,12 +78,11 @@ class CouchWeaveRepositoryFactoryTest {
         return new CouchWeaveRepositoryFactory(operations, context);
     }
 
-    private static Class<?> factoryBase(CouchWeaveRepositoryFactory factory, Class<?> type) {
-        return base(factory, new DefaultRepositoryMetadata(type));
+    private static Class<?> factoryBase(Class<?> type) {
+        return base(new DefaultRepositoryMetadata(type));
     }
 
-    private static Class<?> base(
-            CouchWeaveRepositoryFactory factory, org.springframework.data.repository.core.RepositoryMetadata metadata) {
+    private static Class<?> base(org.springframework.data.repository.core.RepositoryMetadata metadata) {
         class Exposed extends CouchWeaveRepositoryFactory {
             Exposed() {
                 super(mock(CouchWeaveOperations.class), new CouchMappingContext("db"));

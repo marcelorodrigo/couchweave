@@ -8,8 +8,11 @@ import io.github.marcelorodrigo.couchweave.repository.support.CouchWeaveReposito
 import io.github.marcelorodrigo.couchweave.repository.support.SimpleCouchWeaveRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.config.RuntimeBeanReference;
+import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.config.RepositoryConfigurationSource;
 import org.springframework.data.repository.core.support.DefaultRepositoryMetadata;
 
 class CouchWeaveRepositoryConfigurationExtensionTest {
@@ -60,6 +63,19 @@ class CouchWeaveRepositoryConfigurationExtensionTest {
         var result = extension.strict(new DefaultRepositoryMetadata(PlainRepo.class));
         // then
         assertThat(result).isFalse();
+    }
+
+    @Test
+    @DisplayName("should wire the mapping context property reference")
+    void shouldWireMappingContextPropertyReference() {
+        // given
+        var builder = BeanDefinitionBuilder.genericBeanDefinition(String.class);
+        // when
+        extension.postProcess(builder, (RepositoryConfigurationSource) null);
+        // then
+        var propertyValue = builder.getRawBeanDefinition().getPropertyValues().get("mappingContext");
+        assertThat(propertyValue).isInstanceOf(RuntimeBeanReference.class);
+        assertThat(((RuntimeBeanReference) propertyValue).getBeanName()).isEqualTo("couchMappingContext");
     }
 
     static class ExposedExtension extends CouchWeaveRepositoryConfigurationExtension {

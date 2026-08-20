@@ -34,10 +34,7 @@ public class CouchWeaveRepositoryFactory extends RepositoryFactorySupport {
                                     metadata.getIdType().getName()));
         }
         try {
-            if (!mappingContext.hasPersistentEntityFor(metadata.getDomainType())) {
-                throw new IllegalStateException("No mapped persistent entity");
-            }
-            mappingContext.getRequiredPersistentEntity(metadata.getDomainType());
+            entity(metadata.getDomainType());
         } catch (RuntimeException exception) {
             throw new CouchWeaveRepositoryConfigurationException(
                     "CouchWeave repository '%s' targets domain type '%s', but no valid @CouchDocument mapping is registered."

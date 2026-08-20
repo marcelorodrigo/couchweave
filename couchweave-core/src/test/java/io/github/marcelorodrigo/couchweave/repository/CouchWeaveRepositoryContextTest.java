@@ -1,6 +1,7 @@
 package io.github.marcelorodrigo.couchweave.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -43,9 +44,11 @@ class CouchWeaveRepositoryContextTest {
         var context = context(operations, LongIdRepository.class);
         // when
         // then
-        org.assertj.core.api.Assertions.assertThatThrownBy(context::refresh)
-                .hasCauseInstanceOf(CouchWeaveRepositoryConfigurationException.class);
-        context.close();
+        try {
+            assertThatThrownBy(context::refresh).hasCauseInstanceOf(CouchWeaveRepositoryConfigurationException.class);
+        } finally {
+            context.close();
+        }
     }
 
     private static AnnotationConfigApplicationContext context(

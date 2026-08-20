@@ -5,7 +5,9 @@ import io.github.marcelorodrigo.couchweave.repository.support.CouchWeaveReposito
 import io.github.marcelorodrigo.couchweave.repository.support.SimpleCouchWeaveRepository;
 import java.util.Collection;
 import java.util.Collections;
+import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport;
+import org.springframework.data.repository.config.RepositoryConfigurationSource;
 import org.springframework.data.repository.core.RepositoryMetadata;
 
 /** Provides Spring Data repository discovery metadata for CouchWeave repositories. */
@@ -45,6 +47,12 @@ public class CouchWeaveRepositoryConfigurationExtension extends RepositoryConfig
     @Override
     public String getRepositoryBaseClassName() {
         return SimpleCouchWeaveRepository.class.getName();
+    }
+
+    /** Wires the CouchWeave mapping context bean into each discovered repository factory. */
+    @Override
+    public void postProcess(BeanDefinitionBuilder builder, RepositoryConfigurationSource source) {
+        builder.addPropertyReference("mappingContext", "couchMappingContext");
     }
 
     /** Claims only repositories explicitly extending CouchWeaveRepository. */

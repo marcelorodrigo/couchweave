@@ -14,8 +14,9 @@ with the code as additional contracts are proven.
 - entity mapping for `_id`, `_rev`, and application fields (available);
 - repository CRUD (available) and derived-query support (planned);
 - Mango index, sorting, and bookmark requirements (planned);
-- optimistic-locking semantics (available) and bulk-operation failure semantics
-  (planned); and
+- optimistic-locking semantics (available), repository collection-operation
+  failure behavior (available), and CouchDB bulk-write per-document outcome
+  behavior (planned); and
 - explicit unsupported Spring Data features.
 
 For now, the [design rationale](/why/) explains the gap CouchWeave intends to

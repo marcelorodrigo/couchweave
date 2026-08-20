@@ -6,7 +6,12 @@ import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Optional;
 
-/** Sequential, non-atomic {@link CouchWeaveRepository} adapter over CouchWeave operations. */
+/**
+ * Sequential, non-atomic {@link CouchWeaveRepository} adapter over CouchWeave operations.
+ *
+ * @param <T> the document type
+ * @param <ID> the document identifier type
+ */
 public class SimpleCouchWeaveRepository<T, ID> implements CouchWeaveRepository<T, ID> {
 
     private final CouchWeaveOperations operations;
@@ -28,8 +33,10 @@ public class SimpleCouchWeaveRepository<T, ID> implements CouchWeaveRepository<T
     /** Saves entities sequentially in input order and stops at the first failure. */
     @Override
     public <S extends T> Iterable<S> saveAll(Iterable<S> entities) {
+        requireNotNull(entities, "entities");
         var saved = new ArrayList<S>();
         for (var entity : entities) {
+            requireNotNull(entity, "entity");
             saved.add(operations.save(entity));
         }
         return saved;
@@ -58,8 +65,10 @@ public class SimpleCouchWeaveRepository<T, ID> implements CouchWeaveRepository<T
     /** Finds identifiers sequentially, preserving order and duplicates while omitting misses. */
     @Override
     public Iterable<T> findAllById(Iterable<ID> ids) {
+        requireNotNull(ids, "ids");
         var result = new ArrayList<T>();
         for (var id : ids) {
+            requireNotNull(id, "id");
             findById(id).ifPresent(result::add);
         }
         return result;
@@ -86,7 +95,9 @@ public class SimpleCouchWeaveRepository<T, ID> implements CouchWeaveRepository<T
     /** Deletes identifiers sequentially and stops at the first failure. */
     @Override
     public void deleteAllById(Iterable<? extends ID> ids) {
+        requireNotNull(ids, "ids");
         for (var id : ids) {
+            requireNotNull(id, "id");
             deleteById(id);
         }
     }
@@ -94,7 +105,9 @@ public class SimpleCouchWeaveRepository<T, ID> implements CouchWeaveRepository<T
     /** Deletes entities sequentially using their revisions and stops at the first failure. */
     @Override
     public void deleteAll(Iterable<? extends T> entities) {
+        requireNotNull(entities, "entities");
         for (var entity : entities) {
+            requireNotNull(entity, "entity");
             delete(entity);
         }
     }
@@ -103,6 +116,12 @@ public class SimpleCouchWeaveRepository<T, ID> implements CouchWeaveRepository<T
     @Override
     public void deleteAll() {
         deleteAll(findAll());
+    }
+
+    private static void requireNotNull(Object value, String name) {
+        if (value == null) {
+            throw new IllegalArgumentException(name + " must not be null");
+        }
     }
 
     private Class<T> entityClass() {

@@ -6,7 +6,13 @@ import io.github.marcelorodrigo.couchweave.repository.CouchWeaveRepositoryConfig
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.support.RepositoryFactoryBeanSupport;
 
-/** Spring factory bean that wires a CouchWeave repository interface to its repository factory. */
+/**
+ * Spring factory bean that wires a CouchWeave repository interface to its repository factory.
+ *
+ * @param <T> the repository interface type
+ * @param <S> the domain type managed by the repository
+ * @param <ID> the document identifier type
+ */
 public class CouchWeaveRepositoryFactoryBean<T extends Repository<S, ID>, S, ID>
         extends RepositoryFactoryBeanSupport<T, S, ID> {
 
@@ -23,10 +29,9 @@ public class CouchWeaveRepositoryFactoryBean<T extends Repository<S, ID>, S, ID>
         this.operations = operations;
     }
 
-    /** Sets and forwards the CouchWeave mapping context used by Spring Data metadata. */
+    /** Sets the CouchWeave mapping context used by the repository factory. */
     public void setMappingContext(CouchMappingContext mappingContext) {
         this.mappingContext = mappingContext;
-        super.setMappingContext(mappingContext);
     }
 
     /** Creates a repository factory with the configured dependencies. */
@@ -35,7 +40,7 @@ public class CouchWeaveRepositoryFactoryBean<T extends Repository<S, ID>, S, ID>
         return new CouchWeaveRepositoryFactory(operations, mappingContext);
     }
 
-    /** Validates required dependencies before Spring Data initializes the factory. */
+    /** Validates required dependencies and forwards the mapping context to Spring Data metadata. */
     @Override
     public void afterPropertiesSet() {
         if (operations == null) {
@@ -46,6 +51,7 @@ public class CouchWeaveRepositoryFactoryBean<T extends Repository<S, ID>, S, ID>
             throw new CouchWeaveRepositoryConfigurationException(
                     "CouchWeave repository factory requires a mappingContext dependency.");
         }
+        super.setMappingContext(mappingContext);
         super.afterPropertiesSet();
     }
 }

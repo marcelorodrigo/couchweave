@@ -4,7 +4,12 @@ import io.github.marcelorodrigo.couchweave.mapping.CouchPersistentEntity;
 import java.util.Objects;
 import org.springframework.data.repository.core.EntityInformation;
 
-/** Adapts CouchWeave persistent metadata to Spring Data repository metadata. */
+/**
+ * Adapts CouchWeave persistent metadata to Spring Data repository metadata.
+ *
+ * @param <T> the document type
+ * @param <ID> the document identifier type
+ */
 public class CouchWeaveEntityInformation<T, ID> implements EntityInformation<T, ID> {
 
     private final CouchPersistentEntity<T> entityMetadata;

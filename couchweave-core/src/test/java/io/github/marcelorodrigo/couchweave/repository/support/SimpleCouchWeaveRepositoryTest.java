@@ -12,6 +12,7 @@ import io.github.marcelorodrigo.couchweave.client.CouchOptimisticLockingFailureE
 import io.github.marcelorodrigo.couchweave.mapping.CouchDocument;
 import io.github.marcelorodrigo.couchweave.mapping.CouchMappingContext;
 import io.github.marcelorodrigo.couchweave.mapping.CouchPersistentEntity;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -102,6 +103,32 @@ class SimpleCouchWeaveRepositoryTest {
         var result = repository.findById("x");
         // then
         assertThat(result).isEmpty();
+    }
+
+    @Test
+    @DisplayName("should check existence delegating with string ID")
+    void shouldCheckExistenceDelegatingWithStringId() {
+        // given
+        when(operations.existsById("x", Person.class)).thenReturn(true);
+        // when
+        var result = repository.existsById("x");
+        // then
+        assertThat(result).isTrue();
+        verify(operations).existsById("x", Person.class);
+    }
+
+    @Test
+    @DisplayName("should find all delegating with entity class")
+    void shouldFindAllDelegatingWithEntityClass() {
+        // given
+        var a = new Person("a");
+        var b = new Person("b");
+        when(operations.findAll(Person.class)).thenReturn(List.of(a, b));
+        // when
+        var result = repository.findAll();
+        // then
+        assertThat(result).containsExactly(a, b);
+        verify(operations).findAll(Person.class);
     }
 
     @Test
@@ -199,6 +226,58 @@ class SimpleCouchWeaveRepositoryTest {
     @DisplayName("should reject null ID")
     void shouldRejectNullId() {
         assertThatThrownBy(() -> repository.findById(null)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("should reject null save all input")
+    void shouldRejectNullSaveAllInput() {
+        assertThatThrownBy(() -> repository.saveAll(null)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("should reject null save all element")
+    void shouldRejectNullSaveAllElement() {
+        assertThatThrownBy(() -> repository.saveAll(Arrays.asList(new Person("a"), null)))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("should reject null find all by ID input")
+    void shouldRejectNullFindAllByIdInput() {
+        assertThatThrownBy(() -> repository.findAllById(null)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("should reject null find all by ID element")
+    void shouldRejectNullFindAllByIdElement() {
+        assertThatThrownBy(() -> repository.findAllById(Arrays.asList("a", null)))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("should reject null delete all by ID input")
+    void shouldRejectNullDeleteAllByIdInput() {
+        assertThatThrownBy(() -> repository.deleteAllById(null)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("should reject null delete all by ID element")
+    void shouldRejectNullDeleteAllByIdElement() {
+        assertThatThrownBy(() -> repository.deleteAllById(Arrays.asList("a", null)))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("should reject null delete all input")
+    void shouldRejectNullDeleteAllInput() {
+        assertThatThrownBy(() -> repository.deleteAll(null)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("should reject null delete all element")
+    void shouldRejectNullDeleteAllElement() {
+        assertThatThrownBy(() -> repository.deleteAll(Arrays.asList(new Person("a"), null)))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
