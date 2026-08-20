@@ -1,0 +1,4 @@
+io.github.marcelorodrigo.couchweave.autoconfigure.CouchWeaveClientAutoConfiguration
+io.github.marcelorodrigo.couchweave.autoconfigure.CouchWeaveMappingAutoConfiguration
+io.github.marcelorodrigo.couchweave.autoconfigure.CouchWeaveOperationsAutoConfiguration
+io.github.marcelorodrigo.couchweave.autoconfigure.CouchWeaveRepositoriesAutoConfiguration
