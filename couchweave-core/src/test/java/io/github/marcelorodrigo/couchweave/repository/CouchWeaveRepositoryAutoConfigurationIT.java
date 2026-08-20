@@ -56,8 +56,6 @@ class CouchWeaveRepositoryAutoConfigurationIT {
     @EnableCouchWeaveRepositories(basePackageClasses = CouchWeaveRepositoryAutoConfigurationIT.class)
     static class EnableConfig {}
 
-    interface AutoBookRepository extends CouchWeaveRepository<AutoBook, String> {}
-
     @CouchDocument(type = "it-autoconfig-book")
     record AutoBook(@Id String id, @Revision String revision, String title) {
 
@@ -66,3 +64,5 @@ class CouchWeaveRepositoryAutoConfigurationIT {
         }
     }
 }
+
+interface AutoBookRepository extends CouchWeaveRepository<CouchWeaveRepositoryAutoConfigurationIT.AutoBook, String> {}
