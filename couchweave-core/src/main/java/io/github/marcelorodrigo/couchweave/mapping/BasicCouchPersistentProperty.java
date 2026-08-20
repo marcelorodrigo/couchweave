@@ -63,6 +63,8 @@ final class BasicCouchPersistentProperty extends AnnotationBasedPersistentProper
     }
 
     /**
+     * Returns whether the property declares a CouchField annotation.
+     *
      * @return whether the property declares a CouchField annotation
      */
     boolean hasCouchFieldAnnotation() {
@@ -77,6 +79,7 @@ final class BasicCouchPersistentProperty extends AnnotationBasedPersistentProper
     /**
      * Finds an annotation declared on the property or its record component.
      *
+     * @param <A> the annotation type
      * @param annotationType the annotation type to find
      * @return the matching annotation, or null when none is present
      */

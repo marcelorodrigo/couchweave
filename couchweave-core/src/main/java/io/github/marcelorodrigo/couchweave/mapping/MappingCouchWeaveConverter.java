@@ -145,6 +145,7 @@ public final class MappingCouchWeaveConverter implements CouchWeaveConverter {
     /**
      * Gets the persistent entity for the supplied type.
      *
+     * @param <T> the entity type
      * @param type the mapped type
      * @return the persistent entity
      */

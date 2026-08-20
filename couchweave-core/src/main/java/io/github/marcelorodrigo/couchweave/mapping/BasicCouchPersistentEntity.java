@@ -8,7 +8,11 @@ import org.springframework.data.mapping.Alias;
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.model.BasicPersistentEntity;
 
-/** Represents persistent metadata for a CouchDB document. */
+/**
+ * Represents persistent metadata for a CouchDB document.
+ *
+ * @param <T> the entity type
+ */
 final class BasicCouchPersistentEntity<T> extends BasicPersistentEntity<T, CouchPersistentProperty>
         implements CouchPersistentEntity<T> {
 
@@ -91,6 +95,8 @@ final class BasicCouchPersistentEntity<T> extends BasicPersistentEntity<T, Couch
     }
 
     /**
+     * Returns whether the entity has been verified.
+     *
      * @return whether the entity has been verified
      */
     boolean isVerified() {

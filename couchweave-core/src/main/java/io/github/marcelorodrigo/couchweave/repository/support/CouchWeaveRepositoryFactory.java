@@ -73,6 +73,7 @@ public class CouchWeaveRepositoryFactory extends RepositoryFactorySupport {
 
     /** Resolves the persistent entity for a domain type.
      *
+     * @param <T> the entity type
      * @param domainClass the domain type to resolve
      * @return the resolved CouchWeave persistent entity
      */
