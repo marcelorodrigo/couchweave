@@ -44,6 +44,87 @@ class CouchDbResponseDecoderTest {
         assertThat(result).isEqualTo(new CouchDbWriteResult("book-42", "2-def"));
     }
 
+    @Test
+    @DisplayName("should decode document bodies from an all documents response in order")
+    void shouldDecodeDocumentBodiesFromAnAllDocumentsResponseInOrder() {
+        // given
+        var response = response("""
+                {"total_rows":2,"rows":[{"id":"book-1","doc":{"_id":"book-1","title":"First"}},
+                {"id":"book-2","doc":{"_id":"book-2","title":"Second"}}]}
+                """);
+
+        // when
+        var documents = decoder.decodeDocuments(response, context);
+
+        // then
+        assertThat(documents)
+                .extracting(document -> document.get("title").stringValue())
+                .containsExactly("First", "Second");
+    }
+
+    @Test
+    @DisplayName("should return an empty list when an all documents response has no rows")
+    void shouldReturnAnEmptyListWhenAnAllDocumentsResponseHasNoRows() {
+        // given
+        var response = response("{\"rows\":[]}");
+
+        // when
+        var documents = decoder.decodeDocuments(response, context);
+
+        // then
+        assertThat(documents).isEmpty();
+    }
+
+    @Test
+    @DisplayName("should reject an all documents response without rows")
+    void shouldRejectAnAllDocumentsResponseWithoutRows() {
+        // given
+        var response = response("{}");
+
+        // when / then
+        assertInvalidDocumentsResponse(response);
+    }
+
+    @Test
+    @DisplayName("should reject an all documents response when rows is not an array")
+    void shouldRejectAnAllDocumentsResponseWhenRowsIsNotAnArray() {
+        // given
+        var response = response("{\"rows\":{}}");
+
+        // when / then
+        assertInvalidDocumentsResponse(response);
+    }
+
+    @Test
+    @DisplayName("should reject an all documents response when a row is not an object")
+    void shouldRejectAnAllDocumentsResponseWhenARowIsNotAnObject() {
+        // given
+        var response = response("{\"rows\":[null]}");
+
+        // when / then
+        assertInvalidDocumentsResponse(response);
+    }
+
+    @Test
+    @DisplayName("should reject an all documents response when a row has no document")
+    void shouldRejectAnAllDocumentsResponseWhenARowHasNoDocument() {
+        // given
+        var response = response("{\"rows\":[{}]}");
+
+        // when / then
+        assertInvalidDocumentsResponse(response);
+    }
+
+    @Test
+    @DisplayName("should reject an all documents response when a document is not an object")
+    void shouldRejectAnAllDocumentsResponseWhenADocumentIsNotAnObject() {
+        // given
+        var response = response("{\"rows\":[{\"doc\":[]}]}");
+
+        // when / then
+        assertInvalidDocumentsResponse(response);
+    }
+
     @ParameterizedTest
     @MethodSource("invalidDocuments")
     @DisplayName("should reject malformed document responses")
@@ -74,6 +155,13 @@ class CouchDbResponseDecoderTest {
 
     private CouchDbResponse response(String body) {
         return new CouchDbResponse(200, HttpHeaders.EMPTY, body);
+    }
+
+    private void assertInvalidDocumentsResponse(CouchDbResponse response) {
+        assertThatThrownBy(() -> decoder.decodeDocuments(response, context))
+                .isInstanceOf(CouchDbResponseException.class)
+                .extracting(exception -> ((CouchDbResponseException) exception).error())
+                .isEqualTo("invalid_response");
     }
 
     private static Stream<Arguments> invalidDocuments() {

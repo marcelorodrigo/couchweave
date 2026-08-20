@@ -36,6 +36,29 @@ public interface CouchWeaveOperations {
     <T> Optional<T> findById(String id, Class<T> entityType);
 
     /**
+     * Finds all documents mapped to an entity type.
+     *
+     * <p>Only documents whose stored discriminator exactly matches the mapped type are converted and
+     * returned. The result is not paginated and preserves CouchDB {@code _all_docs} response order.
+     *
+     * @param entityType mapped entity type
+     * @param <T> entity type
+     * @return all matching mapped entities from the entity's database
+     */
+    <T> Iterable<T> findAll(Class<T> entityType);
+
+    /**
+     * Counts all documents mapped to an entity type.
+     *
+     * <p>The count applies the mapped type's exact discriminator filter and does not use CouchDB's
+     * unfiltered {@code total_rows} value.
+     *
+     * @param entityType mapped entity type
+     * @return the number of matching documents
+     */
+    long count(Class<?> entityType);
+
+    /**
      * Checks whether a document exists.
      *
      * @param id document identifier

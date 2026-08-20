@@ -107,6 +107,38 @@ class CouchWeaveTemplateIT {
     }
 
     @Test
+    @DisplayName("should find all filtering unrelated discriminator types")
+    void shouldFindAllFilteringUnrelatedDiscriminatorTypes(CouchDbTestDatabase database) {
+        // given
+        var template = template(database, MutableBook.class, ImmutableBook.class);
+        var book = template.save(new MutableBook("filter-book-" + UUID.randomUUID(), null, "Book"));
+        template.save(new ImmutableBook("filter-immutable-" + UUID.randomUUID(), null, "Immutable"));
+
+        // when
+        var books = template.findAll(MutableBook.class);
+
+        // then
+        assertThat(books).containsExactly(book);
+        assertThat(template.count(MutableBook.class)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("should count only matching documents")
+    void shouldCountOnlyMatchingDocuments(CouchDbTestDatabase database) {
+        // given
+        var template = template(database, MutableBook.class, ImmutableBook.class);
+        template.save(new MutableBook("count-book-" + UUID.randomUUID(), null, "First"));
+        template.save(new MutableBook("count-book-" + UUID.randomUUID(), null, "Second"));
+        template.save(new ImmutableBook("count-immutable-" + UUID.randomUUID(), null, "Other"));
+
+        // when
+        var count = template.count(MutableBook.class);
+
+        // then
+        assertThat(count).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("should route an annotated entity to its override database")
     void shouldRouteAnAnnotatedEntityToItsOverrideDatabase(CouchDbTestDatabase database) throws Exception {
         // given

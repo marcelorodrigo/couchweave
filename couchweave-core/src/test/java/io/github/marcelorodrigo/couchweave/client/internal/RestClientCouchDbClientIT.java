@@ -79,6 +79,25 @@ class RestClientCouchDbClientIT {
                 .hasMessageContaining(created.revision());
     }
 
+    @Test
+    @DisplayName("should fetch document bodies from all documents against CouchDB")
+    void shouldFetchDocumentBodiesFromAllDocumentsAgainstCouchDb(CouchDbTestDatabase database) throws JacksonException {
+        // given
+        var client = client(database);
+        client.putDocument(
+                database.databaseName(), "book-1", objectMapper.readTree("{\"_id\":\"book-1\",\"title\":\"First\"}"));
+        client.putDocument(
+                database.databaseName(), "book-2", objectMapper.readTree("{\"_id\":\"book-2\",\"title\":\"Second\"}"));
+
+        // when
+        var documents = client.getAllDocuments(database.databaseName());
+
+        // then
+        assertThat(documents)
+                .extracting(document -> document.get("title").stringValue())
+                .containsExactly("First", "Second");
+    }
+
     private RestClientCouchDbClient client(CouchDbTestDatabase database) {
         return new RestClientCouchDbClient(new CouchDbClientSettings(
                 database.serverUri(),

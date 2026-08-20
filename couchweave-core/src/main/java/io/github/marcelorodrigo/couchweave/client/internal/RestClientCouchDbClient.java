@@ -119,6 +119,21 @@ final class RestClientCouchDbClient implements CouchDbClient {
         }
     }
 
+    /**
+     * Reads all document bodies from a database through CouchDB's {@code _all_docs} endpoint.
+     *
+     * @param database source database
+     * @return document bodies in CouchDB response order
+     */
+    @Override
+    public List<JsonNode> getAllDocuments(String database) {
+        requireText(database, DATABASE_PARAMETER);
+        var context = CouchDbRequestContext.forDocument(database, null, null);
+        var response =
+                exchange(HttpMethod.GET, List.of(database, "_all_docs"), Map.of("include_docs", "true"), null, context);
+        return responseDecoder.decodeDocuments(response, context);
+    }
+
     @Override
     public boolean documentExists(String database, String documentId) {
         requireText(database, DATABASE_PARAMETER);

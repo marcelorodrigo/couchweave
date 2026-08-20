@@ -16,6 +16,7 @@ import io.github.marcelorodrigo.couchweave.mapping.CouchDocument;
 import io.github.marcelorodrigo.couchweave.mapping.CouchMappingContext;
 import io.github.marcelorodrigo.couchweave.mapping.CouchWeaveConverter;
 import io.github.marcelorodrigo.couchweave.mapping.Revision;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,6 +27,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mapping.MappingException;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.node.ObjectNode;
 
@@ -107,6 +109,133 @@ class CouchWeaveTemplateTest {
 
         // then
         assertThat(result).contains(expected);
+    }
+
+    @Test
+    @DisplayName("should find only documents with the exact entity discriminator")
+    void shouldFindOnlyDocumentsWithTheExactEntityDiscriminator() {
+        // given
+        var matching = document("book-1", null);
+        var otherType = document("novel-1", null);
+        otherType.put("couchweave_type", "novel");
+        var design = document("_design/books", null);
+        when(client.getAllDocuments("archive")).thenReturn(List.of(matching, otherType, design));
+        var expected = new Book("book-1", null, "CouchWeave");
+        when(converter.read(Book.class, matching)).thenReturn(expected);
+
+        // when
+        var result = template.findAll(Book.class);
+
+        // then
+        assertThat(result).containsExactly(expected);
+        verify(converter).read(Book.class, matching);
+    }
+
+    @Test
+    @DisplayName("should preserve the all documents response order")
+    void shouldPreserveTheAllDocumentsResponseOrder() {
+        // given
+        var first = document("book-1", null);
+        var second = document("book-2", null);
+        when(client.getAllDocuments("archive")).thenReturn(List.of(first, second));
+        var firstEntity = new Book("book-1", null, "First");
+        var secondEntity = new Book("book-2", null, "Second");
+        when(converter.read(Book.class, first)).thenReturn(firstEntity);
+        when(converter.read(Book.class, second)).thenReturn(secondEntity);
+
+        // when
+        var result = template.findAll(Book.class);
+
+        // then
+        assertThat(result).containsExactly(firstEntity, secondEntity);
+    }
+
+    @Test
+    @DisplayName("should propagate a malformed matching document failure")
+    void shouldPropagateAMalformedMatchingDocumentFailure() {
+        // given
+        var matching = document("book-1", null);
+        var failure = new IllegalStateException("malformed document");
+        when(client.getAllDocuments("archive")).thenReturn(List.of(matching));
+        when(converter.read(Book.class, matching)).thenThrow(failure);
+
+        // when
+        var action = (org.assertj.core.api.ThrowableAssert.ThrowingCallable) () -> template.findAll(Book.class);
+
+        // then
+        assertThatThrownBy(action).isSameAs(failure);
+    }
+
+    @Test
+    @DisplayName("should reject an unmapped entity type when finding all")
+    void shouldRejectAnUnmappedEntityTypeWhenFindingAll() {
+        // given
+
+        // when
+        var action = (org.assertj.core.api.ThrowableAssert.ThrowingCallable) () -> template.findAll(Unmapped.class);
+
+        // then
+        assertThatThrownBy(action).isInstanceOf(MappingException.class);
+    }
+
+    @Test
+    @DisplayName("should count only documents with the exact entity discriminator")
+    void shouldCountOnlyDocumentsWithTheExactEntityDiscriminator() {
+        // given
+        var matching = document("book-1", null);
+        var otherType = document("novel-1", null);
+        otherType.put("couchweave_type", "novel");
+        var design = document("_design/books", null);
+        when(client.getAllDocuments("archive")).thenReturn(List.of(matching, otherType, design));
+        when(converter.read(Book.class, matching)).thenReturn(new Book("book-1", null, "CouchWeave"));
+
+        // when
+        var result = template.count(Book.class);
+
+        // then
+        assertThat(result).isEqualTo(1L);
+    }
+
+    @Test
+    @DisplayName("should propagate a malformed matching document count failure")
+    void shouldPropagateAMalformedMatchingDocumentCountFailure() {
+        // given
+        var matching = document("book-1", null);
+        var failure = new IllegalStateException("malformed document");
+        when(client.getAllDocuments("archive")).thenReturn(List.of(matching));
+        when(converter.read(Book.class, matching)).thenThrow(failure);
+
+        // when
+        var action = (org.assertj.core.api.ThrowableAssert.ThrowingCallable) () -> template.count(Book.class);
+
+        // then
+        assertThatThrownBy(action).isSameAs(failure);
+    }
+
+    @Test
+    @DisplayName("should route find all to the entity database")
+    void shouldRouteFindAllToTheEntityDatabase() {
+        // given
+        when(client.getAllDocuments("archive")).thenReturn(List.of());
+
+        // when
+        template.findAll(Book.class);
+
+        // then
+        verify(client).getAllDocuments("archive");
+    }
+
+    @Test
+    @DisplayName("should route count to the entity database")
+    void shouldRouteCountToTheEntityDatabase() {
+        // given
+        when(client.getAllDocuments("archive")).thenReturn(List.of());
+
+        // when
+        template.count(Book.class);
+
+        // then
+        verify(client).getAllDocuments("archive");
     }
 
     @Test
@@ -371,6 +500,8 @@ class CouchWeaveTemplateTest {
             this.title = title;
         }
     }
+
+    static class Unmapped {}
 
     @CouchDocument(type = "no-revision")
     record NoRevisionBook(@Id String id, String title) {}
