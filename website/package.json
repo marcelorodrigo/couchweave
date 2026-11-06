@@ -14,7 +14,7 @@
     "check": "pnpm test && pnpm build && pnpm run test:output && pnpm run validate:html"
   },
   "devDependencies": {
-    "@tailwindcss/cli": "4.3.3",
+    "@tailwindcss/cli": "4.3.4",
     "@tailwindcss/typography": "0.5.20",
     "html-validate": "11.16.0",
     "tailwindcss": "4.3.3"
